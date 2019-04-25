@@ -1,0 +1,58 @@
+{
+    "Master": {
+        "Enable": false,
+        "MasterType": "Master",
+        "WebRoot": "static/console",
+        "WebHost": "0.0.0.0:8686",
+        "SSH": [],
+        "Process": []
+    },
+    "Module": {
+        "Gate": [
+            {
+                "Id": "Gate001",
+                "ProcessID": "development",
+                "Settings": {
+                    "WSAddr": ":3653",
+                    "TCPAddr": ":3563",
+                    "MaxMsgLen": 4096,
+                    "HTTPTimeout": 10,
+                    "MaxConnNum": 20000,
+                    "Tls": false,
+                    "CertFile": "sslkey/h5link.pem",
+                    "KeyFile": "sslkey/h5link.key",
+                    "MinHBStorage": 60
+                }
+            }
+        ],
+        "Master": [
+            {
+                "Id": "Master001",
+                "ProcessID": "development"
+            }
+        ],
+        "Login": [
+            {
+                "Id": "Login001",
+                "ProcessID": "development"
+            }
+        ],
+        "Wechat": [
+            {
+                "Id": "Wechat001",
+                "ProcessID": "development"
+            }
+        ]
+    },
+    "Mqtt": {
+        "WirteLoopChanNum": 10,
+        "ReadPackLoop": 1,
+        "ReadTimeout": 600,
+        "WriteTimeout": 300
+    },
+    "Rpc": {
+        "MaxCoroutine": 100,
+        "RpcExpired": 3,
+        "LogSuccess": false
+    }
+}
