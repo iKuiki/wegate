@@ -36,58 +36,43 @@ func TestLogin(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	// 未登陆情况下注销
-	// 期望：返回RetCodeUnauthorized
-	resp, err := w.Request("Login/HD_Logout", []byte(`{}`))
-	if err != nil {
-		t.Fatalf("Login/HD_Logout error: %+v", err)
+	objects := []TestObjective{
+		TestObjective{
+			FuncPath:    "Login/HD_Logout",
+			Payload:     `{}`,
+			ExpectedRet: common.RetCodeUnauthorized,
+			Description: "未登陆情况下注销",
+		},
+		TestObjective{
+			FuncPath:    "Login/HD_Login",
+			Payload:     `{}`,
+			ExpectedRet: common.RetCodeBadRequest,
+			Description: "用户、密码为nil情况下登陆",
+		},
+		TestObjective{
+			FuncPath:    "Login/HD_Login",
+			Payload:     `{"username":"abc","password":"test"}`,
+			ExpectedRet: common.RetCodeOK,
+			Description: "正常登陆",
+		},
+		TestObjective{
+			FuncPath:    "Login/HD_Login",
+			Payload:     `{"username":"abc","password":"test"}`,
+			ExpectedRet: common.RetCodeBadRequest,
+			Description: "登陆后再登陆",
+		},
+		TestObjective{
+			FuncPath:    "Login/HD_Logout",
+			Payload:     `{}`,
+			ExpectedRet: common.RetCodeOK,
+			Description: "正常注销",
+		},
+		TestObjective{
+			FuncPath:    "Login/HD_Logout",
+			Payload:     `{}`,
+			ExpectedRet: common.RetCodeUnauthorized,
+			Description: "已注销的情况下注销",
+		},
 	}
-	if resp.Ret != common.RetCodeUnauthorized {
-		t.Fatalf("not login yet, func(logout) shoud return RetCodeUnauthorized(401), but now is %v with Msg: %s", resp.Ret, resp.Msg)
-	}
-	// 用户、密码为nil情况下登陆
-	// 期望：返回RetCodeBadRequest
-	resp, err = w.Request("Login/HD_Login", []byte(`{}`))
-	if err != nil {
-		t.Fatalf("Login/HD_Login error: %+v", err)
-	}
-	if resp.Ret != common.RetCodeBadRequest {
-		t.Fatalf("login with empty info, shoud return RetCodeBadRequest(400), but now is %v with Msg: %s", resp.Ret, resp.Msg)
-	}
-	// 正常登陆
-	// 期望：返回RetCodeOK
-	resp, err = w.Request("Login/HD_Login", []byte(`{"username":"abc","password":"test"}`))
-	if err != nil {
-		t.Fatalf("Login/HD_Login error: %+v", err)
-	}
-	if resp.Ret != common.RetCodeOK {
-		t.Fatalf("login with empty info, shoud return RetCodeOK(200), but now is %v with Msg: %s", resp.Ret, resp.Msg)
-	}
-	// 登陆后再登陆
-	// 期望：返回RetCodeBadRequest
-	resp, err = w.Request("Login/HD_Login", []byte(`{"username":"abc","password":"test"}`))
-	if err != nil {
-		t.Fatalf("Login/HD_Login error: %+v", err)
-	}
-	if resp.Ret != common.RetCodeBadRequest {
-		t.Fatalf("login with empty info, shoud return RetCodeBadRequest(400), but now is %v with Msg: %s", resp.Ret, resp.Msg)
-	}
-	// 正常注销
-	// 期望：返回RetCodeOK
-	resp, err = w.Request("Login/HD_Logout", []byte(`{}`))
-	if err != nil {
-		t.Fatalf("Login/HD_Logout error: %+v", err)
-	}
-	if resp.Ret != common.RetCodeOK {
-		t.Fatalf("not login yet, func(logout) shoud return RetCodeOK(200), but now is %v with Msg: %s", resp.Ret, resp.Msg)
-	}
-	// 已注销的情况下注销
-	// 期望：返回RetCodeUnauthorized
-	resp, err = w.Request("Login/HD_Logout", []byte(`{}`))
-	if err != nil {
-		t.Fatalf("Login/HD_Logout error: %+v", err)
-	}
-	if resp.Ret != common.RetCodeUnauthorized {
-		t.Fatalf("not login yet, func(logout) shoud return RetCodeUnauthorized(401), but now is %v with Msg: %s", resp.Ret, resp.Msg)
-	}
+	w.CoverageTesting(t, objects)
 }
