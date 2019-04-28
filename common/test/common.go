@@ -1,4 +1,4 @@
-package login_test
+package commontest
 
 import (
 	"encoding/json"
@@ -8,6 +8,7 @@ import (
 	"wegate/common"
 )
 
+// Work 测试执行者
 type Work struct {
 	work.MqttWork
 }
@@ -17,6 +18,7 @@ type rpcResult struct {
 	Result common.Response
 }
 
+// Request 发起请求并返回response
 func (w Work) Request(topic string, payload []byte) (resp common.Response, err error) {
 	msg, err := w.MqttWork.Request(topic, payload)
 	if err != nil {
@@ -35,6 +37,7 @@ func (w Work) Request(topic string, payload []byte) (resp common.Response, err e
 	return
 }
 
+// TestObjective 测试目标
 type TestObjective struct {
 	FuncPath    string         // 远程rpc路径
 	Payload     string         // 请求载体
@@ -42,6 +45,7 @@ type TestObjective struct {
 	Description string         // 测试描述，例如「以xxx条件测试」，当测试结果不正确时会输出
 }
 
+// CoverageTesting 覆盖测试，可以根据测试目标TestObjective数组进行简单的覆盖测试
 func (w Work) CoverageTesting(t *testing.T, objects []TestObjective) {
 	for _, object := range objects {
 		resp, err := w.Request(object.FuncPath, []byte(object.Payload))

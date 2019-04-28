@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 	"wegate/common"
+	"wegate/common/test"
 	"wegate/login"
 	"wegate/wgate"
 )
@@ -24,7 +25,7 @@ func TestLogin(t *testing.T) {
 	)
 	time.Sleep(time.Second) // 小睡1秒等待mqant启动完成
 	// -------------- 开始测试逻辑 --------------
-	w := Work{}
+	w := commontest.Work{}
 	opts := w.GetDefaultOptions("tcp://127.0.0.1:3563")
 	opts.SetConnectionLostHandler(func(client MQTT.Client, err error) {
 		fmt.Println("ConnectionLost", err.Error())
@@ -36,38 +37,38 @@ func TestLogin(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	objects := []TestObjective{
-		TestObjective{
+	objects := []commontest.TestObjective{
+		commontest.TestObjective{
 			FuncPath:    "Login/HD_Logout",
 			Payload:     `{}`,
 			ExpectedRet: common.RetCodeUnauthorized,
 			Description: "未登陆情况下注销",
 		},
-		TestObjective{
+		commontest.TestObjective{
 			FuncPath:    "Login/HD_Login",
 			Payload:     `{}`,
 			ExpectedRet: common.RetCodeBadRequest,
 			Description: "用户、密码为nil情况下登陆",
 		},
-		TestObjective{
+		commontest.TestObjective{
 			FuncPath:    "Login/HD_Login",
 			Payload:     `{"username":"abc","password":"test"}`,
 			ExpectedRet: common.RetCodeOK,
 			Description: "正常登陆",
 		},
-		TestObjective{
+		commontest.TestObjective{
 			FuncPath:    "Login/HD_Login",
 			Payload:     `{"username":"abc","password":"test"}`,
 			ExpectedRet: common.RetCodeBadRequest,
 			Description: "登陆后再登陆",
 		},
-		TestObjective{
+		commontest.TestObjective{
 			FuncPath:    "Login/HD_Logout",
 			Payload:     `{}`,
 			ExpectedRet: common.RetCodeOK,
 			Description: "正常注销",
 		},
-		TestObjective{
+		commontest.TestObjective{
 			FuncPath:    "Login/HD_Logout",
 			Payload:     `{}`,
 			ExpectedRet: common.RetCodeUnauthorized,
