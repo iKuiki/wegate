@@ -16,10 +16,10 @@ Wechat Plugin插件
 type Plugin interface {
 	getName() string
 	getDescription() string
-	// NewStatus 推送新的Status
-	newStatus(statusItem WxServiceStatusItem)
-	// ModifyContact 联系人发生修改时的推送
+	// loginStatus 登陆状态变化时
+	loginStatus(loginStatus LoginStatusItem)
+	// modifyContact 联系人发生修改时的推送
 	modifyContact(contact datastruct.Contact)
-	// NewMessage 接受到新消息时的推送
+	// newMessage 接受到新消息时的推送
 	newMessage(msg datastruct.Message)
 }

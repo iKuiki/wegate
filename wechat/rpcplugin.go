@@ -58,9 +58,9 @@ func (p *rpcPlugin) getDescription() string {
 	return p.description
 }
 
-func (p *rpcPlugin) newStatus(statusItem WxServiceStatusItem) {
+func (p *rpcPlugin) loginStatus(loginStatus LoginStatusItem) {
 	if p.statusListenerFunc != "" {
-		p.caller.RpcInvokeNR(p.moduleType, p.statusListenerFunc, statusItem)
+		p.caller.RpcInvokeNR(p.moduleType, p.statusListenerFunc, loginStatus)
 	}
 }
 

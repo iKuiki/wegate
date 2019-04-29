@@ -3,61 +3,97 @@ package wechat
 import (
 	"fmt"
 	"github.com/ikuiki/wwdk"
-	"github.com/ikuiki/wwdk/datastruct"
+	"github.com/liangdas/mqant/log"
 	"github.com/mdp/qrterminal"
 	"os"
 )
 
 func (m *Wechat) wechatServe() {
-	// 实例化WechatWeb对象
-	wx, err := wwdk.NewWechatWeb()
-	if err != nil {
-		panic("Get new wechatweb client error: " + err.Error())
-	}
 	// 创建登陆用channel用于回传登陆信息
 	loginChan := make(chan wwdk.LoginChannelItem)
-	wx.Login(loginChan)
+	m.wechat.Login(loginChan)
 	// 根据channel返回信息进行处理
 	for item := range loginChan {
-		switch item.Code {
-		case wwdk.LoginStatusWaitForScan:
-			// 返回了登陆二维码链接，输出到屏幕
-			qrterminal.Generate(item.Msg, qrterminal.L, os.Stdout)
-		case wwdk.LoginStatusErrorOccurred:
-			// 登陆失败
-			panic(fmt.Sprintf("WxWeb Login error: %+v", item.Err))
-		}
+		m.updateLoginStatus(item)
 	}
 	// 创建同步channel
 	syncChannel := make(chan wwdk.SyncChannelItem)
 	// 将channel传入startServe方法，开始同步服务并且将新信息通过syncChannel传回
-	wx.StartServe(syncChannel)
+	m.wechat.StartServe(syncChannel)
 	// 处理syncChannel传回信息
 	for item := range syncChannel {
 		// 在子方法内执行逻辑
 		switch item.Code {
+		// 联系人变更
+		case wwdk.SyncStatusModifyContact:
+			// 广播contact
+			for _, plugin := range m.pluginMap {
+				func() {
+					defer func() {
+						// 调用外部方法，必须做好recover工作
+						if e := recover(); e != nil {
+							log.Error("send modify contact panic: %+v", e)
+						}
+					}()
+					plugin.modifyContact(*item.Contact)
+				}()
+			}
 		// 收到新信息
 		case wwdk.SyncStatusNewMessage:
-			// 根据收到的信息类型分别处理
-			msg := item.Message
-			switch msg.MsgType {
-			case datastruct.TextMsg:
-				// 处理文字信息
-				processTextMessage(wx, msg)
+			// 广播message
+			for _, plugin := range m.pluginMap {
+				func() {
+					defer func() {
+						// 调用外部方法，必须做好recover工作
+						if e := recover(); e != nil {
+							log.Error("send new message panic: %+v", e)
+						}
+					}()
+					plugin.newMessage(*item.Message)
+				}()
 			}
 		case wwdk.SyncStatusPanic:
 			// 发生致命错误，sync中断
-			fmt.Printf("sync panic: %+v\n", err)
-			break
+			panic(fmt.Sprintf("sync panic: %+v", item.Err))
 		}
 	}
 }
 
-func processTextMessage(app *wwdk.WechatWeb, msg *datastruct.Message) {
-	from, err := app.GetContact(msg.FromUserName)
-	if err != nil {
-		fmt.Println("getContact error: " + err.Error())
-		return
+func (m *Wechat) updateLoginStatus(item wwdk.LoginChannelItem) {
+	switch item.Code {
+	case wwdk.LoginStatusWaitForScan:
+		// 返回了登陆二维码链接，输出到屏幕
+		qrterminal.Generate(item.Msg, qrterminal.L, os.Stdout)
+		// 更改模块状态
+		m.loginStatus.Status = LoginStatusWaitForScan
+		m.loginStatus.Msg = item.Msg
+	case wwdk.LoginStatusScanedWaitForLogin:
+		m.loginStatus.Status = LoginStatusScanedWaitForLogin
+		m.loginStatus.Msg = item.Msg
+	case wwdk.LoginStatusScanedFinish:
+		m.loginStatus.Status = LoginStatusScanedFinish
+	case wwdk.LoginStatusGotCookie:
+		m.loginStatus.Status = LoginStatusGotCookie
+	case wwdk.LoginStatusInitFinish:
+		m.loginStatus.Status = LoginStatusInitFinish
+	case wwdk.LoginStatusGotContact:
+		m.loginStatus.Status = LoginStatusGotContact
+	case wwdk.LoginStatusGotBatchContact:
+		m.loginStatus.Status = LoginStatusGotBatchContact
+	case wwdk.LoginStatusErrorOccurred:
+		// 登陆失败
+		panic(fmt.Sprintf("WxWeb Login error: %+v", item.Err))
 	}
-	fmt.Printf("Recived a text msg from %s: %s", from.NickName, msg.Content)
+	// 广播loginStatus
+	for _, plugin := range m.pluginMap {
+		func() {
+			defer func() {
+				// 调用外部方法，必须做好recover工作
+				if e := recover(); e != nil {
+					log.Error("send login status panic: %+v", e)
+				}
+			}()
+			plugin.loginStatus(m.loginStatus)
+		}()
+	}
 }
