@@ -18,13 +18,11 @@ type Wechat struct {
 	basemodule.BaseModule
 	// 微信相关对象
 	wechat *wwdk.WechatWeb // 微信sdk本体
-	// 监听器队列：
-	// 监听器队列调用本模块提供的注册方法来注册监听器到queue中
+	// 插件Map：
+	// 插件模块调用本模块提供的注册方法来注册插件到map中
 	// 注册时分配一个uuid作为key，并将此uuid存入mqant的session中（为了断开时反注册
-	// 当有对应事件发生时，则遍历监听器向其发送事件
-	statusQueue  map[string]statusListener  // 状态监听器队列
-	messageQueue map[string]msgListener     // 信息监听器队列
-	contactQueue map[string]contactListener // 联系人监听器队列
+	// 当有对应事件发生时，则遍历插件向其发送事件
+	pluginMap map[string]Plugin // 插件注册map
 }
 
 // GetType 获取模块类型
