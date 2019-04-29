@@ -4,6 +4,7 @@ import (
 	"github.com/liangdas/mqant"
 	"github.com/liangdas/mqant/module/modules"
 	"wegate/login"
+	"wegate/ping"
 	"wegate/wechat"
 	"wegate/wgate"
 )
@@ -26,5 +27,6 @@ func main() {
 		wgate.Module(), //这是默认网关模块,是必须的支持 TCP,websocket,MQTT协议
 		login.Module(), //这是用户登录验证模块
 		wechat.Module(),
+		ping.Module(),
 	)
 }
