@@ -16,8 +16,10 @@ import (
 
 // Module 模块实例化
 func Module() module.Module {
-	gate := new(Login)
-	return gate
+	m := new(Login)
+	listener := new(Listener)
+	m.SetListener(listener)
+	return m
 }
 
 // Login 登陆模块
