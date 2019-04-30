@@ -47,14 +47,17 @@ func (m *Wechat) OnInit(app module.App, settings *conf.ModuleSettings) {
 	if err != nil {
 		panic("Get new wechatweb client error: " + err.Error())
 	}
+	m.GetServer().RegisterGO("RegisterRpcPlugin", m.registerRPCPlugin)
 	m.wechat = wx
 }
 
 // Run 运行主函数
 func (m *Wechat) Run(closeSig chan bool) {
+	close := make(chan bool)
+	closed := false
 	go func() {
 		// 内嵌一层函数以异步
-		for {
+		for !closed {
 			func() {
 				// 在子方法中运行，发生panic后可以及时恢复
 				defer func() {
@@ -64,8 +67,12 @@ func (m *Wechat) Run(closeSig chan bool) {
 				}()
 				// 开始执行服务块
 				// TODO: 应当把closeSig传入wechatServe中，在其逻辑内合理停止
-				m.wechatServe()
+				m.wechatServe(close)
 			}()
 		}
 	}()
+	// 等待到关闭信号，关闭wechat循环与wechat服务器
+	<-closeSig
+	closed = true
+	close <- true
 }

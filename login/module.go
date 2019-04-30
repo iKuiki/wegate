@@ -10,7 +10,6 @@ import (
 	"github.com/liangdas/mqant/gate"
 	"github.com/liangdas/mqant/module"
 	"github.com/liangdas/mqant/module/base"
-	"time"
 	"wegate/common"
 )
 
@@ -25,7 +24,6 @@ func Module() module.Module {
 // Login 登陆模块
 type Login struct {
 	basemodule.BaseModule
-	currentTime string // 测试用，试好删
 }
 
 // GetType 获取模块类型
@@ -45,7 +43,6 @@ func (m *Login) OnInit(app module.App, settings *conf.ModuleSettings) {
 	m.BaseModule.OnInit(m, app, settings)
 	m.GetServer().RegisterGO("HD_Login", m.login)   //我们约定所有对客户端的请求都以Handler_开头
 	m.GetServer().RegisterGO("HD_Logout", m.logout) //我们约定所有对客户端的请求都以Handler_开头
-	m.currentTime = time.Now().Format("15:04:05")   // 测试用，试好删
 }
 
 // Run 运行主函数
@@ -53,9 +50,7 @@ func (m *Login) Run(closeSig chan bool) {
 	for {
 		select {
 		case <-closeSig:
-			break
-		case now := <-time.Tick(time.Second):
-			m.currentTime = now.Format("15:04:05")
+			return
 		}
 	}
 }

@@ -22,8 +22,8 @@ type rpcPlugin struct {
 	caller              rpcCaller
 }
 
-// RegisterListener 注册监听器
-func (s *Wechat) registerListener(
+// registerRPCPlugin 注册监听器
+func (s *Wechat) registerRPCPlugin(
 	name,
 	description,
 	moduleType,
