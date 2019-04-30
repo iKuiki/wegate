@@ -34,7 +34,10 @@
         "Login": [
             {
                 "Id": "Login001",
-                "ProcessID": "development"
+                "ProcessID": "development",
+                "Settings": {
+                    "Password": "hello"
+                }
             }
         ],
         "Wechat": [

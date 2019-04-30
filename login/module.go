@@ -5,12 +5,9 @@ package login
 */
 
 import (
-	"fmt"
 	"github.com/liangdas/mqant/conf"
-	"github.com/liangdas/mqant/gate"
 	"github.com/liangdas/mqant/module"
 	"github.com/liangdas/mqant/module/base"
-	"wegate/common"
 )
 
 // Module 模块实例化
@@ -59,56 +56,4 @@ func (m *Login) Run(closeSig chan bool) {
 func (m *Login) OnDestroy() {
 	//一定别忘了关闭RPC
 	m.GetServer().OnDestroy()
-}
-
-func (m *Login) login(session gate.Session, msg map[string]interface{}) (result common.Response, err string) {
-	if !session.IsGuest() {
-		result = common.Response{
-			Ret: common.RetCodeBadRequest,
-			Msg: "already login",
-		}
-		return
-	}
-	if username, ok := msg["username"]; !ok || username == "" {
-		result = common.Response{
-			Ret: common.RetCodeBadRequest,
-			Msg: "username cannot be empty",
-		}
-		return
-	}
-	if password, ok := msg["password"]; !ok || password == "" {
-		result = common.Response{
-			Ret: common.RetCodeBadRequest,
-			Msg: "password cannot be empty",
-		}
-		return
-	}
-	username := msg["username"].(string)
-	err = session.Bind(username)
-	if err != "" {
-		return
-	}
-	session.Set("login", "true")
-	session.Push() //推送到网关
-	return common.Response{Ret: common.RetCodeOK, Msg: fmt.Sprintf("login success %s", username)}, ""
-}
-
-func (m *Login) logout(session gate.Session, msg map[string]interface{}) (result common.Response, err string) {
-	if session.IsGuest() {
-		result = common.Response{
-			Ret: common.RetCodeUnauthorized,
-			Msg: "is guest, need login",
-		}
-		return
-	}
-	session.Remove("login")
-	err = session.UnBind()
-	if err != "" {
-		return
-	}
-	err = session.Push()
-	if err != "" {
-		return
-	}
-	return common.Response{Ret: common.RetCodeOK, Msg: "logout success"}, ""
 }

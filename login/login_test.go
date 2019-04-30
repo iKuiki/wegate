@@ -37,6 +37,7 @@ func TestLogin(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
+	pass := conf.Conf.Module["Login"][0].Settings["Password"].(string) + time.Now().Format(time.RFC3339)
 	objects := []commontest.TestObjective{
 		commontest.TestObjective{
 			FuncPath:    "Login/HD_Logout",
@@ -52,13 +53,13 @@ func TestLogin(t *testing.T) {
 		},
 		commontest.TestObjective{
 			FuncPath:    "Login/HD_Login",
-			Payload:     `{"username":"abc","password":"test"}`,
+			Payload:     `{"username":"abc","password":"` + pass + `"}`,
 			ExpectedRet: common.RetCodeOK,
 			Description: "正常登陆",
 		},
 		commontest.TestObjective{
 			FuncPath:    "Login/HD_Login",
-			Payload:     `{"username":"abc","password":"test"}`,
+			Payload:     `{"username":"abc","password":"` + pass + `"}`,
 			ExpectedRet: common.RetCodeBadRequest,
 			Description: "登陆后再登陆",
 		},
