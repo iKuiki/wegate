@@ -43,6 +43,12 @@
                 "ProcessID": "development"
             }
         ],
+        "QrTerminal": [
+            {
+                "Id": "QrTerminal001",
+                "ProcessID": "development"
+            }
+        ],
         "Ping": [
             {
                 "Id": "Ping001",

@@ -36,4 +36,6 @@ func (m *Ping) OnInit(app module.App, settings *conf.ModuleSettings) {
 
 // Run 运行主函数
 func (m *Ping) Run(closeSig chan bool) {
+	// 关闭信号
+	<-closeSig
 }

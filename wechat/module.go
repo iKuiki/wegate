@@ -18,8 +18,8 @@ func Module() module.Module {
 type Wechat struct {
 	basemodule.BaseModule
 	// 微信相关对象
-	wechat      *wwdk.WechatWeb // 微信sdk本体
-	loginStatus LoginStatusItem // 当前微信状态
+	wechat      *wwdk.WechatWeb       // 微信sdk本体
+	loginStatus wwdk.LoginChannelItem // 当前微信状态
 	// 插件Map：
 	// 插件模块调用本模块提供的注册方法来注册插件到map中
 	// 注册时分配一个uuid作为key，并将此uuid存入mqant的session中（为了断开时反注册
@@ -47,6 +47,8 @@ func (m *Wechat) OnInit(app module.App, settings *conf.ModuleSettings) {
 	if err != nil {
 		panic("Get new wechatweb client error: " + err.Error())
 	}
+	m.pluginMap = make(map[string]Plugin)
+	m.App.AddRPCSerialize("WechatSerialize", new(wechatSerialize))
 	m.GetServer().RegisterGO("RegisterRpcPlugin", m.registerRPCPlugin)
 	m.wechat = wx
 }

@@ -1,8 +1,9 @@
 package wechat
 
 import (
+	"github.com/ikuiki/wwdk"
 	"github.com/ikuiki/wwdk/datastruct"
-	"github.com/pkg/errors"
+	"github.com/liangdas/mqant/log"
 )
 
 // 提供其他微信子模块注册维护工作
@@ -16,37 +17,39 @@ type rpcPlugin struct {
 	name                string
 	description         string
 	moduleType          string
-	statusListenerFunc  string
+	loginListenerFunc   string
 	contactListenerFunc string
 	msgListenerFunc     string
 	caller              rpcCaller
 }
 
 // registerRPCPlugin 注册监听器
-func (s *Wechat) registerRPCPlugin(
+func (m *Wechat) registerRPCPlugin(
 	name,
 	description,
 	moduleType,
-	statusListenerFunc,
+	loginListenerFunc,
 	contactListenerFunc,
-	msgListenerFunc string) (token string, err error) {
+	msgListenerFunc string) (token string, err string) {
 	// ------------------ func start ------------------
 	// 检查rpcPlugin是否符合规范
 	if name == "" || description == "" || moduleType == "" {
-		err = errors.New("module name or description or moduleType is empty")
+		err = "module name or description or moduleType is empty"
 		return
 	}
+	log.Info("新Plugin注册：%s[%s](%s)", name, description, moduleType)
 	plugin := &rpcPlugin{
 		name:                name,
 		description:         description,
 		moduleType:          moduleType,
-		statusListenerFunc:  statusListenerFunc,
+		loginListenerFunc:   loginListenerFunc,
 		contactListenerFunc: contactListenerFunc,
 		msgListenerFunc:     msgListenerFunc,
-		caller:              s,
+		caller:              m,
 	}
 	token = name
-	s.pluginMap[token] = plugin
+	plugin.loginStatus(m.loginStatus)
+	m.pluginMap[token] = plugin
 	return
 }
 
@@ -58,20 +61,29 @@ func (p *rpcPlugin) getDescription() string {
 	return p.description
 }
 
-func (p *rpcPlugin) loginStatus(loginStatus LoginStatusItem) {
-	if p.statusListenerFunc != "" {
-		p.caller.RpcInvokeNR(p.moduleType, p.statusListenerFunc, loginStatus)
+func (p *rpcPlugin) loginStatus(loginStatus wwdk.LoginChannelItem) {
+	if p.loginListenerFunc != "" {
+		e := p.caller.RpcInvokeNR(p.moduleType, p.loginListenerFunc, loginStatus)
+		if e != nil {
+			log.Info("推送登陆消息%s(%s)失败: %v", e)
+		}
 	}
 }
 
 func (p *rpcPlugin) modifyContact(contact datastruct.Contact) {
 	if p.contactListenerFunc != "" {
-		p.caller.RpcInvokeNR(p.moduleType, p.contactListenerFunc, contact)
+		e := p.caller.RpcInvokeNR(p.moduleType, p.contactListenerFunc, contact)
+		if e != nil {
+			log.Info("推送修改联系人消息%s(%s)失败: %v", e)
+		}
 	}
 }
 
 func (p *rpcPlugin) newMessage(msg datastruct.Message) {
 	if p.msgListenerFunc != "" {
-		p.caller.RpcInvokeNR(p.moduleType, p.msgListenerFunc, msg)
+		e := p.caller.RpcInvokeNR(p.moduleType, p.msgListenerFunc, msg)
+		if e != nil {
+			log.Info("推送新消息%s(%s)失败: %v", e)
+		}
 	}
 }

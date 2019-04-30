@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"github.com/ikuiki/wwdk"
 	"github.com/liangdas/mqant/log"
-	"github.com/mdp/qrterminal"
-	"os"
 )
 
 func (m *Wechat) wechatServe(closeSig <-chan bool) {
@@ -82,30 +80,13 @@ SYNCLOOP:
 }
 
 func (m *Wechat) updateLoginStatus(item wwdk.LoginChannelItem) {
-	switch item.Code {
-	case wwdk.LoginStatusWaitForScan:
-		// 返回了登陆二维码链接，输出到屏幕
-		qrterminal.Generate(item.Msg, qrterminal.L, os.Stdout)
-		// 更改模块状态
-		m.loginStatus.Status = LoginStatusWaitForScan
-		m.loginStatus.Msg = item.Msg
-	case wwdk.LoginStatusScanedWaitForLogin:
-		m.loginStatus.Status = LoginStatusScanedWaitForLogin
-		m.loginStatus.Msg = item.Msg
-	case wwdk.LoginStatusScanedFinish:
-		m.loginStatus.Status = LoginStatusScanedFinish
-	case wwdk.LoginStatusGotCookie:
-		m.loginStatus.Status = LoginStatusGotCookie
-	case wwdk.LoginStatusInitFinish:
-		m.loginStatus.Status = LoginStatusInitFinish
-	case wwdk.LoginStatusGotContact:
-		m.loginStatus.Status = LoginStatusGotContact
-	case wwdk.LoginStatusGotBatchContact:
-		m.loginStatus.Status = LoginStatusGotBatchContact
-	case wwdk.LoginStatusErrorOccurred:
+	// 做初步处理
+	if item.Code == wwdk.LoginStatusErrorOccurred {
 		// 登陆失败
 		panic(fmt.Sprintf("WxWeb Login error: %+v", item.Err))
 	}
+	// 更新到Wechat
+	m.loginStatus = item
 	// 广播loginStatus
 	for _, plugin := range m.pluginMap {
 		go func(plugin Plugin) {
