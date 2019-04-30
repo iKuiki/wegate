@@ -47,7 +47,8 @@ type TestObjective struct {
 
 // CoverageTesting 覆盖测试，可以根据测试目标TestObjective数组进行简单的覆盖测试
 func (w Work) CoverageTesting(t *testing.T, objects []TestObjective) {
-	for _, object := range objects {
+	for i, object := range objects {
+		t.Logf("running %d object\n", i)
 		resp, err := w.Request(object.FuncPath, []byte(object.Payload))
 		if err != nil {
 			t.Fatalf("%s call error: %+v", object.FuncPath, err)

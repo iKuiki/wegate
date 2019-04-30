@@ -68,6 +68,9 @@ func (m *Wechat) OnInit(app module.App, settings *conf.ModuleSettings) {
 	m.GetServer().RegisterGO("Wechat_ModifyUserRemarkName", m.modifyUserRemarkName)
 	m.GetServer().RegisterGO("Wechat_ModifyChatRoomTopic", m.modifyChatRoomTopic)
 	m.GetServer().RegisterGO("Wechat_GetRunInfo", m.getRunInfo)
+	// ------------------ 客户端 ------------------
+	m.GetServer().RegisterGO("HD_Wechat_RegisterMQTTPlugin", m.registerMQTTPlugin)
+	m.GetServer().RegisterGO("HD_Wechat_CallWechat", m.callWechat)
 }
 
 // Run 运行主函数

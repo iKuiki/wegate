@@ -17,7 +17,14 @@ type mqttCaller interface {
 }
 
 func (m *Wechat) registerMQTTPlugin(session gate.Session, msg map[string]interface{}) (result common.Response, err string) {
-	name, description := msg["name"].(string), msg["description"].(string)
+	if session.IsGuest() {
+		result = common.Response{
+			Ret: common.RetCodeUnauthorized,
+			Msg: "need login",
+		}
+		return
+	}
+	name, description := common.ForceString(msg["name"]), common.ForceString(msg["description"])
 	// 检查mqttPlugin是否符合规范
 	if name == "" || description == "" {
 		result = common.Response{
@@ -28,10 +35,12 @@ func (m *Wechat) registerMQTTPlugin(session gate.Session, msg map[string]interfa
 	}
 	log.Info("新MQTT Plugin注册：%s[%s]", name, description)
 	var (
-		loginListenerTopic   string
-		contactListenerTopic string
-		msgListenerTopic     string
+		loginListenerTopic   = common.ForceString(msg["loginListenerTopic"])
+		contactListenerTopic = common.ForceString(msg["contactListenerTopic"])
+		msgListenerTopic     = common.ForceString(msg["msgListenerTopic"])
 	)
+	token := uuid.Rand().Hex()
+	session.Set("WechatToken", token)
 	plugin := &mqttPlugin{
 		name:                 name,
 		description:          description,
@@ -40,11 +49,116 @@ func (m *Wechat) registerMQTTPlugin(session gate.Session, msg map[string]interfa
 		msgListenerTopic:     msgListenerTopic,
 		caller:               session,
 	}
-	token := uuid.Rand().Hex()
 	plugin.loginStatus(m.loginStatus)
 	m.pluginMap[token] = plugin
 	result.Ret = common.RetCodeOK
 	result.Msg = token
+	return
+}
+
+func (m *Wechat) callWechat(session gate.Session, msg map[string]interface{}) (result common.Response, err string) {
+	if session.IsGuest() {
+		result = common.Response{
+			Ret: common.RetCodeUnauthorized,
+			Msg: "need login",
+		}
+		return
+	}
+	fnName := common.ForceString(msg["fnName"])
+	var (
+		resp interface{}
+		eStr string
+	)
+	switch fnName {
+	case "SendTextMessage":
+		// sendTextMessage(token string, toUserName, content string) (result wechatstruct.SendMessageRespond, err string)
+		resp, eStr = m.sendTextMessage(
+			common.ForceString(msg["token"]),
+			common.ForceString(msg["toUserName"]),
+			common.ForceString(msg["content"]),
+		)
+	case "RevokeMessage":
+		// revokeMessage(token string, srvMsgID, localMsgID, toUserName string) (result wechatstruct.RevokeMessageRespond, err string)
+		resp, eStr = m.revokeMessage(
+			common.ForceString(msg["token"]),
+			common.ForceString(msg["srvMsgID"]),
+			common.ForceString(msg["localMsgID"]),
+			common.ForceString(msg["toUserName"]),
+		)
+	case "GetContactList":
+		// getContactList(token string) (result []datastruct.Contact, err string)
+		resp, eStr = m.getContactList(
+			common.ForceString(msg["token"]),
+		)
+	case "GetContactByUserName":
+		// getContactByUserName(token string, userName string) (result datastruct.Contact, err string)
+		resp, eStr = m.getContactByUserName(
+			common.ForceString(msg["token"]),
+			common.ForceString(msg["userName"]),
+		)
+	case "GetContactByAlias":
+		// getContactByAlias(token string, alias string) (result datastruct.Contact, err string)
+		resp, eStr = m.getContactByAlias(
+			common.ForceString(msg["token"]),
+			common.ForceString(msg["alias"]),
+		)
+	case "GetContactByNickname":
+		// getContactByNickname(token string, nickname string) (result datastruct.Contact, err string)
+		resp, eStr = m.getContactByNickname(
+			common.ForceString(msg["token"]),
+			common.ForceString(msg["nickname"]),
+		)
+	case "GetContactByRemarkName":
+		// getContactByRemarkName(token string, remarkName string) (result datastruct.Contact, err string)
+		resp, eStr = m.getContactByRemarkName(
+			common.ForceString(msg["token"]),
+			common.ForceString(msg["remarkName"]),
+		)
+	case "ModifyUserRemarkName":
+		// modifyUserRemarkName(token string, userName, remarkName string) (result, err string)
+		resp, eStr = m.modifyUserRemarkName(
+			common.ForceString(msg["token"]),
+			common.ForceString(msg["userName"]),
+			common.ForceString(msg["remarkName"]),
+		)
+	case "ModifyChatRoomTopic":
+		// modifyChatRoomTopic(token string, userName, newTopic string) (result, err string)
+		resp, eStr = m.modifyChatRoomTopic(
+			common.ForceString(msg["token"]),
+			common.ForceString(msg["userName"]),
+			common.ForceString(msg["newTopic"]),
+		)
+	case "GetRunInfo":
+		// getRunInfo(token string) (result wwdk.WechatRunInfo, err string)
+		resp, eStr = m.getRunInfo(
+			common.ForceString(msg["token"]),
+		)
+	default:
+		result = common.Response{
+			Ret: common.RetCodeBadRequest,
+			Msg: "func not found",
+		}
+		return
+	}
+	if eStr != "" {
+		result = common.Response{
+			Ret: common.RetCodeServerError,
+			Msg: eStr,
+		}
+		return
+	}
+	payload, e := json.Marshal(resp)
+	if e != nil {
+		result = common.Response{
+			Ret: common.RetCodeServerError,
+			Msg: e.Error(),
+		}
+		return
+	}
+	result = common.Response{
+		Ret: common.RetCodeOK,
+		Msg: string(payload),
+	}
 	return
 }
 

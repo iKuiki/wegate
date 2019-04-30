@@ -16,29 +16,29 @@ func (m *Login) login(session gate.Session, msg map[string]interface{}) (result 
 		}
 		return
 	}
-	if username, ok := msg["username"]; !ok || username == "" {
+	username := common.ForceString(msg["username"])
+	if username == "" {
 		result = common.Response{
 			Ret: common.RetCodeBadRequest,
 			Msg: "username cannot be empty",
 		}
 		return
 	}
-	password, ok := msg["password"]
-	if !ok || password == "" {
+	password := common.ForceString(msg["password"])
+	if password == "" {
 		result = common.Response{
 			Ret: common.RetCodeBadRequest,
 			Msg: "password cannot be empty",
 		}
 		return
 	}
-	if !m.validPassword(password.(string)) {
+	if !m.validPassword(password) {
 		result = common.Response{
 			Ret: common.RetCodeBadRequest,
 			Msg: "username or password incorrect",
 		}
 		return
 	}
-	username := msg["username"].(string)
 	err = session.Bind(username)
 	if err != "" {
 		return
