@@ -2,6 +2,7 @@ package wechat
 
 import (
 	"github.com/ikuiki/wwdk"
+	"github.com/ikuiki/wwdk/storer"
 	"github.com/liangdas/mqant/conf"
 	"github.com/liangdas/mqant/log"
 	"github.com/liangdas/mqant/module"
@@ -42,15 +43,20 @@ func (m *Wechat) Version() string {
 // OnInit 模块初始化
 func (m *Wechat) OnInit(app module.App, settings *conf.ModuleSettings) {
 	m.BaseModule.OnInit(m, app, settings)
+	var err error
 	// 实例化WechatWeb对象
-	wx, err := wwdk.NewWechatWeb()
+	if filename, ok := settings.Settings["LoginStorerFile"].(string); ok && filename != "" {
+		loginStorer := storer.MustNewFileStorer(filename)
+		m.wechat, err = wwdk.NewWechatWeb(loginStorer)
+	} else {
+		m.wechat, err = wwdk.NewWechatWeb()
+	}
 	if err != nil {
 		panic("Get new wechatweb client error: " + err.Error())
 	}
 	m.pluginMap = make(map[string]Plugin)
 	m.App.AddRPCSerialize("WechatSerialize", new(wechatSerialize))
 	m.GetServer().RegisterGO("RegisterRpcPlugin", m.registerRPCPlugin)
-	m.wechat = wx
 }
 
 // Run 运行主函数

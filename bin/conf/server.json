@@ -40,7 +40,10 @@
         "Wechat": [
             {
                 "Id": "Wechat001",
-                "ProcessID": "development"
+                "ProcessID": "development",
+                "Settings": {
+                    "LoginStorerFile": "bin/conf/logininfo.json"
+                }
             }
         ],
         "QrTerminal": [
