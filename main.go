@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/liangdas/mqant"
 	"github.com/liangdas/mqant/module/modules"
+	"wegate/common"
 	"wegate/login"
 	"wegate/ping"
 	"wegate/qrterminal"
@@ -22,6 +23,8 @@ import (
 
 func main() {
 	app := mqant.CreateApp(true) // 只有是在调试模式下才会在控制台打印日志, 非调试模式下只在日志文件中输出日志
+	// 注册序列号函数
+	app.AddRPCSerialize(common.RPCParamWegateResponseMarshalType, new(common.ResponseSerializer))
 	//app.Route("Chat",ChatRoute)
 	app.Run(
 		modules.MasterModule(),

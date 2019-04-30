@@ -12,7 +12,7 @@ type ResponseSerializer struct {
 
 const (
 	// RPCParamWegateResponseMarshalType Response序列化后的pType常量
-	RPCParamWegateResponseMarshalType = "WegateResponseMarshal"
+	RPCParamWegateResponseMarshalType string = "common.Response"
 )
 
 // Serialize 序列化
