@@ -44,7 +44,7 @@ SYNCLOOP:
 				case wwdk.SyncStatusModifyContact:
 					// 广播contact
 					for _, plugin := range m.pluginMap {
-						func() {
+						go func(plugin Plugin) {
 							defer func() {
 								// 调用外部方法，必须做好recover工作
 								if e := recover(); e != nil {
@@ -52,13 +52,13 @@ SYNCLOOP:
 								}
 							}()
 							plugin.modifyContact(*item.Contact)
-						}()
+						}(plugin)
 					}
 				// 收到新信息
 				case wwdk.SyncStatusNewMessage:
 					// 广播message
 					for _, plugin := range m.pluginMap {
-						func() {
+						go func(plugin Plugin) {
 							defer func() {
 								// 调用外部方法，必须做好recover工作
 								if e := recover(); e != nil {
@@ -66,7 +66,7 @@ SYNCLOOP:
 								}
 							}()
 							plugin.newMessage(*item.Message)
-						}()
+						}(plugin)
 					}
 				case wwdk.SyncStatusPanic:
 					// 发生致命错误，sync中断
@@ -108,7 +108,7 @@ func (m *Wechat) updateLoginStatus(item wwdk.LoginChannelItem) {
 	}
 	// 广播loginStatus
 	for _, plugin := range m.pluginMap {
-		func() {
+		go func(plugin Plugin) {
 			defer func() {
 				// 调用外部方法，必须做好recover工作
 				if e := recover(); e != nil {
@@ -116,6 +116,6 @@ func (m *Wechat) updateLoginStatus(item wwdk.LoginChannelItem) {
 				}
 			}()
 			plugin.loginStatus(m.loginStatus)
-		}()
+		}(plugin)
 	}
 }
