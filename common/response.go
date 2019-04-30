@@ -20,4 +20,6 @@ const (
 	RetCodeBadRequest RetCode = 400
 	// RetCodeUnauthorized 未认证
 	RetCodeUnauthorized RetCode = 401
+	// RetCodeServerError 服务器端出错
+	RetCodeServerError RetCode = 500
 )

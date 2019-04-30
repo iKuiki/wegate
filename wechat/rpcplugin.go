@@ -37,7 +37,7 @@ func (m *Wechat) registerRPCPlugin(
 		err = "module name or description or moduleType is empty"
 		return
 	}
-	log.Info("新Plugin注册：%s[%s](%s)", name, description, moduleType)
+	log.Info("新RPC Plugin注册：%s[%s](%s)", name, description, moduleType)
 	plugin := &rpcPlugin{
 		name:                name,
 		description:         description,
