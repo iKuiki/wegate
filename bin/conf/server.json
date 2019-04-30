@@ -42,6 +42,12 @@
                 "Id": "Wechat001",
                 "ProcessID": "development"
             }
+        ],
+        "Ping": [
+            {
+                "Id": "Ping001",
+                "ProcessID": "development"
+            }
         ]
     },
     "Mqtt": {
