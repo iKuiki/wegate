@@ -57,6 +57,17 @@ func (m *Wechat) OnInit(app module.App, settings *conf.ModuleSettings) {
 	m.pluginMap = make(map[string]Plugin)
 	m.App.AddRPCSerialize("WechatSerialize", new(wechatSerialize))
 	m.GetServer().RegisterGO("RegisterRpcPlugin", m.registerRPCPlugin)
+	// 针对wwdk操作的方法都以Wechat开头
+	m.GetServer().RegisterGO("Wechat_SendTextMessage", m.sendTextMessage)
+	m.GetServer().RegisterGO("Wechat_RevokeMessage", m.revokeMessage)
+	m.GetServer().RegisterGO("Wechat_GetContactList", m.getContactList)
+	m.GetServer().RegisterGO("Wechat_GetContactByUserName", m.getContactByUserName)
+	m.GetServer().RegisterGO("Wechat_GetContactByAlias", m.getContactByAlias)
+	m.GetServer().RegisterGO("Wechat_GetContactByNickname", m.getContactByNickname)
+	m.GetServer().RegisterGO("Wechat_GetContactByRemarkName", m.getContactByRemarkName)
+	m.GetServer().RegisterGO("Wechat_ModifyUserRemarkName", m.modifyUserRemarkName)
+	m.GetServer().RegisterGO("Wechat_ModifyChatRoomTopic", m.modifyChatRoomTopic)
+	m.GetServer().RegisterGO("Wechat_GetRunInfo", m.getRunInfo)
 }
 
 // Run 运行主函数

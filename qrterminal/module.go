@@ -51,14 +51,14 @@ func (m *QrTerminal) Run(closeSig chan bool) {
 	if err != "" {
 		log.Error("RegisterRpcPlugin error: %s", err)
 	}
-	log.Info("注册完成，token: %s", token)
+	log.Debug("qrterminal模块注册完成，token: %s", token)
 	// 关闭信号
 	<-closeSig
 }
 
 func (m *QrTerminal) showLoginQrCode(loginItem wwdk.LoginChannelItem) (result, err string) {
-	log.Debug("收到新的登陆消息(%d)", loginItem.Code)
 	if loginItem.Code == wwdk.LoginStatusWaitForScan {
+		log.Debug("检测到扫码登录(%d)", loginItem.Code)
 		qrterminal.Generate(loginItem.Msg, qrterminal.L, os.Stdout)
 	}
 	result = "success"

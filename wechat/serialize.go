@@ -6,6 +6,7 @@ import (
 	"github.com/ikuiki/wwdk/datastruct"
 	"github.com/pkg/errors"
 	"reflect"
+	"wegate/wechat/wechatstruct"
 )
 
 type wechatSerialize struct{}
@@ -18,6 +19,14 @@ func (s *wechatSerialize) Serialize(param interface{}) (ptype string, p []byte, 
 		ptype = "datastruct.Contact"
 	case datastruct.Message:
 		ptype = "datastruct.Message"
+	case []datastruct.Contact:
+		ptype = "[]datastruct.Contact"
+	case wechatstruct.SendMessageRespond:
+		ptype = "wechatstruct.SendMessageRespond"
+	case wechatstruct.RevokeMessageRespond:
+		ptype = "wechatstruct.RevokeMessageRespond"
+	case wwdk.WechatRunInfo:
+		ptype = "wwdk.WechatRunInfo"
 	default:
 		err = errors.New("unknown param type: " + reflect.TypeOf(param).Name())
 	}
@@ -39,6 +48,22 @@ func (s *wechatSerialize) Deserialize(ptype string, b []byte) (param interface{}
 		var item datastruct.Message
 		err = json.Unmarshal(b, &item)
 		param = item
+	case "[]datastruct.Contact":
+		var item []datastruct.Contact
+		err = json.Unmarshal(b, &item)
+		param = item
+	case "wechatstruct.SendMessageRespond":
+		var item wechatstruct.SendMessageRespond
+		err = json.Unmarshal(b, &item)
+		param = item
+	case "wechatstruct.RevokeMessageRespond":
+		var item wechatstruct.RevokeMessageRespond
+		err = json.Unmarshal(b, &item)
+		param = item
+	case "wwdk.WechatRunInfo":
+		var item wwdk.WechatRunInfo
+		err = json.Unmarshal(b, &item)
+		param = item
 	default:
 		err = errors.New("unknown param type: " + ptype)
 	}
@@ -50,5 +75,9 @@ func (s *wechatSerialize) GetTypes() []string {
 		"wwdk.LoginChannelItem",
 		"datastruct.Contact",
 		"datastruct.Message",
+		"[]datastruct.Contact",
+		"wechatstruct.SendMessageRespond",
+		"wechatstruct.RevokeMessageRespond",
+		"wwdk.WechatRunInfo",
 	}
 }
