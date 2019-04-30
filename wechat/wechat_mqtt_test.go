@@ -51,16 +51,22 @@ func TestMQTT(t *testing.T) {
 	if resp.Ret != common.RetCodeOK {
 		t.Fatalf("登录失败: %s", resp.Msg)
 	}
-	token := resp.Msg
-	resp, _ = w.Request("Wechat/HD_Wechat_RegisterMQTTPlugin", []byte(`{"token":"`+token+`","name":"testPlugin","description":"测试模块","loginListenerTopic":"LoginStatus"}`))
+	resp, _ = w.Request("Wechat/HD_Wechat_RegisterMQTTPlugin", []byte(`{"name":"testPlugin","description":"测试模块","loginListenerTopic":"LoginStatus"}`))
 	if resp.Ret != common.RetCodeOK {
 		t.Fatalf("注册plugin失败: %s", resp.Msg)
 	}
+	token := resp.Msg
+	t.Logf("获取到token：%s\n", token)
 	select {
 	case <-loginStatusChannel:
 		t.Log("login status channel recive")
 	case <-time.After(5 * time.Second):
 		t.Fatal("waiting login status channel timeout")
 	}
-	// TODO: 测试调用wechat方法
+	// 测试调用wechat方法
+	resp, _ = w.Request("Wechat/HD_Wechat_CallWechat", []byte(`{"fnName":"GetRunInfo","token":"`+token+`"}`))
+	if resp.Ret != common.RetCodeOK {
+		t.Fatalf("GetRunInfo失败: %s", resp.Msg)
+	}
+	t.Log("RunInfo: ", resp.Msg)
 }
