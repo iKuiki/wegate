@@ -38,8 +38,8 @@ func (m *Login) Version() string {
 // OnInit 模块初始化
 func (m *Login) OnInit(app module.App, settings *conf.ModuleSettings) {
 	m.BaseModule.OnInit(m, app, settings)
-	m.GetServer().RegisterGO("HD_Login", m.login)   //我们约定所有对客户端的请求都以Handler_开头
-	m.GetServer().RegisterGO("HD_Logout", m.logout) //我们约定所有对客户端的请求都以Handler_开头
+	m.GetServer().RegisterGO("HD_Login", m.login) //我们约定所有对客户端的请求都以Handler_开头
+	// m.GetServer().RegisterGO("HD_Logout", m.logout) //我们约定所有对客户端的请求都以Handler_开头
 }
 
 // Run 运行主函数

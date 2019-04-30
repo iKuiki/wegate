@@ -39,12 +39,12 @@ func TestLogin(t *testing.T) {
 	}
 	pass := conf.Conf.Module["Login"][0].Settings["Password"].(string) + time.Now().Format(time.RFC3339)
 	objects := []commontest.TestObjective{
-		commontest.TestObjective{
-			FuncPath:    "Login/HD_Logout",
-			Payload:     `{}`,
-			ExpectedRet: common.RetCodeUnauthorized,
-			Description: "未登陆情况下注销",
-		},
+		// commontest.TestObjective{
+		// 	FuncPath:    "Login/HD_Logout",
+		// 	Payload:     `{}`,
+		// 	ExpectedRet: common.RetCodeUnauthorized,
+		// 	Description: "未登陆情况下注销",
+		// },
 		commontest.TestObjective{
 			FuncPath:    "Login/HD_Login",
 			Payload:     `{}`,
@@ -63,18 +63,18 @@ func TestLogin(t *testing.T) {
 			ExpectedRet: common.RetCodeBadRequest,
 			Description: "登陆后再登陆",
 		},
-		commontest.TestObjective{
-			FuncPath:    "Login/HD_Logout",
-			Payload:     `{}`,
-			ExpectedRet: common.RetCodeOK,
-			Description: "正常注销",
-		},
-		commontest.TestObjective{
-			FuncPath:    "Login/HD_Logout",
-			Payload:     `{}`,
-			ExpectedRet: common.RetCodeUnauthorized,
-			Description: "已注销的情况下注销",
-		},
+		// commontest.TestObjective{
+		// 	FuncPath:    "Login/HD_Logout",
+		// 	Payload:     `{}`,
+		// 	ExpectedRet: common.RetCodeOK,
+		// 	Description: "正常注销",
+		// },
+		// commontest.TestObjective{
+		// 	FuncPath:    "Login/HD_Logout",
+		// 	Payload:     `{}`,
+		// 	ExpectedRet: common.RetCodeUnauthorized,
+		// 	Description: "已注销的情况下注销",
+		// },
 	}
 	w.CoverageTesting(t, objects)
 }

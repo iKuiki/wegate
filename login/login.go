@@ -48,25 +48,25 @@ func (m *Login) login(session gate.Session, msg map[string]interface{}) (result 
 	return common.Response{Ret: common.RetCodeOK, Msg: fmt.Sprintf("login success %s", username)}, ""
 }
 
-func (m *Login) logout(session gate.Session, msg map[string]interface{}) (result common.Response, err string) {
-	if session.IsGuest() {
-		result = common.Response{
-			Ret: common.RetCodeUnauthorized,
-			Msg: "is guest, need login",
-		}
-		return
-	}
-	session.Remove("login")
-	err = session.UnBind()
-	if err != "" {
-		return
-	}
-	err = session.Push()
-	if err != "" {
-		return
-	}
-	return common.Response{Ret: common.RetCodeOK, Msg: "logout success"}, ""
-}
+// func (m *Login) logout(session gate.Session, msg map[string]interface{}) (result common.Response, err string) {
+// 	if session.IsGuest() {
+// 		result = common.Response{
+// 			Ret: common.RetCodeUnauthorized,
+// 			Msg: "is guest, need login",
+// 		}
+// 		return
+// 	}
+// 	session.Remove("login")
+// 	err = session.UnBind()
+// 	if err != "" {
+// 		return
+// 	}
+// 	err = session.Push()
+// 	if err != "" {
+// 		return
+// 	}
+// 	return common.Response{Ret: common.RetCodeOK, Msg: "logout success"}, ""
+// }
 
 func (m *Login) validPassword(password string) (valid bool) {
 	p, ok := m.GetModuleSettings().Settings["Password"]
