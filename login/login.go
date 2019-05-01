@@ -74,7 +74,7 @@ func (m *Login) validPassword(password string) (valid bool) {
 		if pStr, ok := p.(string); ok {
 			now := time.Now()
 			// 密码通过日期加盐运算后作为密文传输
-			timeLayout := time.RFC3339
+			timeLayout := time.RFC822
 			pwds := []string{pStr + now.Format(timeLayout)}
 			// 为防止日期不一致，放宽日期到前后5分钟
 			for i := 1; i < 6; i++ {
