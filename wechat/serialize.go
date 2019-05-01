@@ -29,6 +29,8 @@ func (s *wechatSerialize) Serialize(param interface{}) (ptype string, p []byte, 
 		ptype = "wwdk.WechatRunInfo"
 	default:
 		err = errors.New("unknown param type: " + reflect.TypeOf(param).Name())
+		// 此处务必要记得返回呀，不然就出大事了！
+		return
 	}
 	p, err = json.Marshal(param)
 	return
