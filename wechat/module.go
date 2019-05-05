@@ -2,6 +2,7 @@ package wechat
 
 import (
 	"github.com/ikuiki/wwdk"
+	"github.com/ikuiki/wwdk/datastruct"
 	"github.com/ikuiki/wwdk/storer"
 	"github.com/liangdas/mqant/conf"
 	"github.com/liangdas/mqant/log"
@@ -19,7 +20,8 @@ func Module() module.Module {
 type Wechat struct {
 	basemodule.BaseModule
 	// 微信相关对象
-	wechat      *wwdk.WechatWeb       // 微信sdk本体
+	wechat      *wwdk.WechatWeb // 微信sdk本体
+	contacts    []datastruct.Contact
 	loginStatus wwdk.LoginChannelItem // 当前微信状态
 	// 插件Map：
 	// 插件模块调用本模块提供的注册方法来注册插件到map中
@@ -44,13 +46,12 @@ func (m *Wechat) Version() string {
 func (m *Wechat) OnInit(app module.App, settings *conf.ModuleSettings) {
 	m.BaseModule.OnInit(m, app, settings)
 	var err error
+	wxConfigs := []interface{}{wwdk.NewLocalMediaStorer("./bin/")}
 	// 实例化WechatWeb对象
 	if filename, ok := settings.Settings["LoginStorerFile"].(string); ok && filename != "" {
-		loginStorer := storer.MustNewFileStorer(filename)
-		m.wechat, err = wwdk.NewWechatWeb(loginStorer)
-	} else {
-		m.wechat, err = wwdk.NewWechatWeb()
+		wxConfigs = append(wxConfigs, storer.MustNewFileStorer(filename))
 	}
+	m.wechat, err = wwdk.NewWechatWeb(wxConfigs...)
 	if err != nil {
 		panic("Get new wechatweb client error: " + err.Error())
 	}

@@ -5,6 +5,7 @@ import (
 	"github.com/ikuiki/wwdk"
 	"github.com/ikuiki/wwdk/datastruct"
 	"github.com/liangdas/mqant/log"
+	"time"
 	"wegate/wechat/wechatstruct"
 )
 
@@ -87,6 +88,10 @@ func (m *Wechat) updateLoginStatus(item wwdk.LoginChannelItem) {
 		// 登陆失败
 		panic(fmt.Sprintf("WxWeb Login error: %+v", item.Err))
 	}
+	// 如果是登陆成功，则存一份联系人表
+	if item.Code == wwdk.LoginStatusGotBatchContact {
+		m.syncContact()
+	}
 	// 更新到Wechat
 	m.loginStatus = item
 	// 广播loginStatus
@@ -101,6 +106,47 @@ func (m *Wechat) updateLoginStatus(item wwdk.LoginChannelItem) {
 			plugin.loginStatus(m.loginStatus)
 		}(plugin)
 	}
+}
+
+// 将m.Wechat中的联系人同步到模块中
+func (m *Wechat) syncContact() {
+	defer func() {
+		if e := recover(); e != nil {
+			log.Error("syncContact panic: %v", e)
+		}
+	}()
+	contacts := m.wechat.GetContactList()
+	contactChan := make(chan datastruct.Contact)
+	for _, contact := range contacts {
+		go func(contact datastruct.Contact) {
+			sChan := make(chan string)
+			go func() {
+				fileurl, err := m.wechat.SaveContactImg(contact)
+				if err == nil {
+					sChan <- fileurl
+				} else {
+					log.Debug("wechat.SaveContactImg error: %v", err)
+					// 如果出错，则输出一个空信息
+					sChan <- ""
+				}
+			}()
+			select {
+			case ret := <-sChan:
+				if ret != "" {
+					contact.HeadImgURL = ret
+				}
+			case <-time.After(time.Second):
+				// 超时，不做修改
+			}
+			contactChan <- contact
+		}(contact)
+	}
+	var nContacts []datastruct.Contact
+	for len(nContacts) < len(contacts) {
+		c := <-contactChan
+		nContacts = append(nContacts, c)
+	}
+	m.contacts = nContacts
 }
 
 // checkToken 检查token是否有效
