@@ -16,18 +16,26 @@ func Module() module.Module {
 	return m
 }
 
+// 控制信号
+type controlSig int32
+
+const (
+	controlSigUploadContactImg controlSig = 100
+)
+
 // Wechat 微信模块
 type Wechat struct {
 	basemodule.BaseModule
 	// 微信相关对象
 	wechat      *wwdk.WechatWeb // 微信sdk本体
-	contacts    []datastruct.Contact
+	contacts    map[string]datastruct.Contact
 	loginStatus wwdk.LoginChannelItem // 当前微信状态
 	// 插件Map：
 	// 插件模块调用本模块提供的注册方法来注册插件到map中
 	// 注册时分配一个uuid作为key，并将此uuid存入mqant的session中（为了断开时反注册
 	// 当有对应事件发生时，则遍历插件向其发送事件
-	pluginMap map[string]Plugin // 插件注册map
+	pluginMap      map[string]Plugin // 插件注册map
+	controlSigChan chan controlSig   // 控制信号发送通道
 }
 
 // GetType 获取模块类型
@@ -46,7 +54,8 @@ func (m *Wechat) Version() string {
 func (m *Wechat) OnInit(app module.App, settings *conf.ModuleSettings) {
 	m.BaseModule.OnInit(m, app, settings)
 	var err error
-	mediaStorer := newMediaStorer()
+	m.controlSigChan = make(chan controlSig)
+	mediaStorer := newMediaStorer(m.controlSigChan)
 	wxConfigs := []interface{}{mediaStorer}
 	// 实例化WechatWeb对象
 	if filename, ok := settings.Settings["LoginStorerFile"].(string); ok && filename != "" {
@@ -57,6 +66,7 @@ func (m *Wechat) OnInit(app module.App, settings *conf.ModuleSettings) {
 		panic("Get new wechatweb client error: " + err.Error())
 	}
 	m.pluginMap = make(map[string]Plugin)
+	m.contacts = make(map[string]datastruct.Contact)
 	m.App.AddRPCSerialize("WechatSerialize", new(wechatSerialize))
 	m.GetServer().RegisterGO("RegisterRpcPlugin", m.registerRPCPlugin)
 	// 针对wwdk操作的方法都以Wechat开头
@@ -80,7 +90,21 @@ func (m *Wechat) OnInit(app module.App, settings *conf.ModuleSettings) {
 
 // Run 运行主函数
 func (m *Wechat) Run(closeSig chan bool) {
-	close := make(chan bool)
+	close, controlClose := make(chan bool), make(chan bool)
+	// 执行控制信号
+	go func() {
+		for {
+			select {
+			case sig := <-m.controlSigChan:
+				switch sig {
+				case controlSigUploadContactImg:
+					m.syncContact()
+				}
+			case <-controlClose:
+				return
+			}
+		}
+	}()
 	closed := false
 	go func() {
 		// 内嵌一层函数以异步
@@ -102,4 +126,5 @@ func (m *Wechat) Run(closeSig chan bool) {
 	<-closeSig
 	closed = true
 	close <- true
+	controlClose <- true
 }

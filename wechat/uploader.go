@@ -19,16 +19,18 @@ type Uploader interface {
 }
 
 // newMediaStorer 新建mediaStorer
-func newMediaStorer() *mediaStorer {
+func newMediaStorer(moduleControlSigChan chan<- controlSig) *mediaStorer {
 	return &mediaStorer{
-		uploaders:  make(map[string]Uploader),
-		finishChan: make(map[string]chan string),
+		uploaders:            make(map[string]Uploader),
+		finishChan:           make(map[string]chan string),
+		moduleControlSigChan: moduleControlSigChan,
 	}
 }
 
 type mediaStorer struct {
-	uploaders  map[string]Uploader
-	finishChan map[string]chan string
+	uploaders            map[string]Uploader
+	finishChan           map[string]chan string
+	moduleControlSigChan chan<- controlSig
 }
 
 func (s *mediaStorer) Storer(file wwdk.MediaFile) (url string, err error) {

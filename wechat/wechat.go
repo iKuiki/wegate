@@ -43,6 +43,12 @@ SYNCLOOP:
 				switch item.Code {
 				// 联系人变更
 				case wwdk.SyncStatusModifyContact:
+					contact := *item.Contact
+					headImg, err := m.wechat.SaveContactImg(contact)
+					if err == nil {
+						contact.HeadImgURL = headImg
+					}
+					m.contacts[contact.UserName] = contact
 					// 广播contact
 					for _, plugin := range m.pluginMap {
 						go func(plugin Plugin) {
@@ -52,7 +58,7 @@ SYNCLOOP:
 									log.Error("send modify contact panic: %+v", e)
 								}
 							}()
-							plugin.modifyContact(*item.Contact)
+							plugin.modifyContact(contact)
 						}(plugin)
 					}
 				// 收到新信息
@@ -141,12 +147,11 @@ func (m *Wechat) syncContact() {
 			contactChan <- contact
 		}(contact)
 	}
-	var nContacts []datastruct.Contact
-	for len(nContacts) < len(contacts) {
+	for i := 0; i < len(contacts); i++ {
 		c := <-contactChan
-		nContacts = append(nContacts, c)
+		m.contacts[c.UserName] = c
 	}
-	m.contacts = nContacts
+	log.Debug("syncContact form wwdk success, total(%d) contacts", len(contacts))
 }
 
 // checkToken 检查token是否有效
