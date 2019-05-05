@@ -64,6 +64,7 @@ func (m *Wechat) callWechat(session gate.Session, msg map[string]interface{}) (r
 		}
 		return
 	}
+	// token后续会检查，所以此处可以暂不检查
 	fnName := common.ForceString(msg["fnName"])
 	var (
 		resp interface{}

@@ -46,7 +46,8 @@ func (m *Wechat) Version() string {
 func (m *Wechat) OnInit(app module.App, settings *conf.ModuleSettings) {
 	m.BaseModule.OnInit(m, app, settings)
 	var err error
-	wxConfigs := []interface{}{wwdk.NewLocalMediaStorer("./bin/")}
+	mediaStorer := newMediaStorer()
+	wxConfigs := []interface{}{mediaStorer}
 	// 实例化WechatWeb对象
 	if filename, ok := settings.Settings["LoginStorerFile"].(string); ok && filename != "" {
 		wxConfigs = append(wxConfigs, storer.MustNewFileStorer(filename))
@@ -72,6 +73,9 @@ func (m *Wechat) OnInit(app module.App, settings *conf.ModuleSettings) {
 	// ------------------ 客户端 ------------------
 	m.GetServer().RegisterGO("HD_Wechat_RegisterMQTTPlugin", m.registerMQTTPlugin)
 	m.GetServer().RegisterGO("HD_Wechat_CallWechat", m.callWechat)
+	// ------------------ 媒体容器客户端 ------------------
+	m.GetServer().RegisterGO("HD_Upload_RegisterMQTTUploader", mediaStorer.registerMQTTUploader)
+	m.GetServer().RegisterGO("HD_Upload_MQTTUploadFinish", mediaStorer.mqttUploadFinish)
 }
 
 // Run 运行主函数
