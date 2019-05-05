@@ -16,8 +16,6 @@ github.com/ikuiki/go-component v0.0.0-20171218165758-b9f2562e71d1 h1:iEY90SGCz5O
 github.com/ikuiki/go-component v0.0.0-20171218165758-b9f2562e71d1/go.mod h1:X6JegIiKSPdHyLC41UjlnpCZ5BFFEnz7hLpLU4vO094=
 github.com/ikuiki/mqant v1.8.1-0.20190427142930-7dabfa32d064 h1:CjM+8e+AMuOejVwaJ6OYXHQDp25iWomh49mcHvrzv30=
 github.com/ikuiki/mqant v1.8.1-0.20190427142930-7dabfa32d064/go.mod h1:tF5hElwI/Pw7xSBUDlZl91Ob4OzbEKd/Sg1X5ZaiJZg=
-github.com/ikuiki/wwdk v2.0.0+incompatible h1:UeCf3qs8FWjAO5IFX9/62fT3fXcvo4VvMImpUZRnH90=
-github.com/ikuiki/wwdk v2.0.0+incompatible/go.mod h1:3HG01QSJDWr7kHGvz2eM0sRH/rkN3WPaArGG4JB7rgg=
 github.com/ikuiki/wwdk v2.1.0+incompatible h1:tAdC6+pGwU2AbvTJR3wqeNz6hWi+TZHSyoc+8UteqH8=
 github.com/ikuiki/wwdk v2.1.0+incompatible/go.mod h1:3HG01QSJDWr7kHGvz2eM0sRH/rkN3WPaArGG4JB7rgg=
 github.com/kataras/golog v0.0.0-20180321173939-03be10146386 h1:VT6AeCHO/mc+VedKBMhoqb5eAK8B1i9F6nZl7EGlHvA=
