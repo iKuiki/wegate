@@ -1,6 +1,7 @@
 package wechat
 
 import (
+	"encoding/json"
 	"github.com/ikuiki/wwdk"
 	"github.com/liangdas/mqant/gate"
 	"github.com/liangdas/mqant/log"
@@ -100,6 +101,7 @@ func (u *mqttUploader) getDescription() string {
 }
 
 func (u *mqttUploader) upload(file wwdk.MediaFile) {
-	u.caller.Send(u.uploadListenerTopic, file.BinaryContent)
+	b, _ := json.Marshal(file)
+	u.caller.Send(u.uploadListenerTopic, b)
 	return
 }
