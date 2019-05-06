@@ -1,0 +1,5 @@
+bin/logs
+.DS_Store
+wegate
+logininfo.json
+wegate.linux
