@@ -63,6 +63,28 @@ SYNCLOOP:
 					}
 				// 收到新信息
 				case wwdk.SyncStatusNewMessage:
+					// 如果为媒体消息，则下载媒体
+					message := *item.Message
+					switch message.MsgType {
+					case datastruct.ImageMsg:
+						if fileurl, err := m.wechat.SaveMessageImage(message); err != nil {
+							log.Debug("wechat.SaveMessageImage error: %v", err)
+						} else {
+							message.FileName = fileurl
+						}
+					case datastruct.VoiceMsg:
+						if fileurl, err := m.wechat.SaveMessageVoice(message); err != nil {
+							log.Debug("wechat.SaveMessageImage error: %v", err)
+						} else {
+							message.FileName = fileurl
+						}
+					case datastruct.LittleVideoMsg:
+						if fileurl, err := m.wechat.SaveMessageVideo(message); err != nil {
+							log.Debug("wechat.SaveMessageImage error: %v", err)
+						} else {
+							message.FileName = fileurl
+						}
+					}
 					// 广播message
 					for _, plugin := range m.pluginMap {
 						go func(plugin Plugin) {
@@ -72,7 +94,7 @@ SYNCLOOP:
 									log.Error("send new message panic: %+v", e)
 								}
 							}()
-							plugin.newMessage(*item.Message)
+							plugin.newMessage(message)
 						}(plugin)
 					}
 				case wwdk.SyncStatusPanic:
