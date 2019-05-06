@@ -6,6 +6,7 @@ import (
 	"github.com/liangdas/mqant/gate/base"
 	"github.com/liangdas/mqant/log"
 	"github.com/liangdas/mqant/module"
+	"wegate/common"
 )
 
 // Module 模块实例化
@@ -55,4 +56,28 @@ func (wgt *WGate) Connect(session gate.Session) {
 // DisConnect 当连接关闭	或者客户端主动发送MQTT DisConnect命令 ,这个函数中Session无法再继续后续的设置操作，只能读取部分配置内容了
 func (wgt *WGate) DisConnect(session gate.Session) {
 	log.Info("客户端断开了链接")
+	// 检查此client是否有注册WechatPlugin
+	if token := session.Get("WechatPluginToken"); token != "" {
+		log.Debug("检测到客户端注册了WechatPlugin，开始卸载")
+		result, eStr := wgt.RpcInvoke("Wechat", "Wechat_DisconnectMQTTPlugin", token)
+		if eStr != "" {
+			log.Error("call Wechat Wechat_DisconnectMQTTPlugin error: %s", eStr)
+		}
+		r := result.(common.Response)
+		if r.Ret != common.RetCodeOK {
+			log.Debug("Wechat_DisconnectMQTTPlugin fail(%d): %s", r.Ret, r.Msg)
+		}
+	}
+	// 检查此client是否有注册WechatUploader
+	if token := session.Get("WechatUploaderToken"); token != "" {
+		log.Debug("检测到客户端注册了WechatUploader，开始卸载")
+		result, eStr := wgt.RpcInvoke("Wechat", "Upload_DisconnectMQTTUploader", token)
+		if eStr != "" {
+			log.Error("call Wechat Upload_DisconnectMQTTUploader error: %s", eStr)
+		}
+		r := result.(common.Response)
+		if r.Ret != common.RetCodeOK {
+			log.Debug("Upload_DisconnectMQTTUploader fail(%d): %s", r.Ret, r.Msg)
+		}
+	}
 }

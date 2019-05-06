@@ -83,9 +83,11 @@ func (m *Wechat) OnInit(app module.App, settings *conf.ModuleSettings) {
 	// ------------------ 客户端 ------------------
 	m.GetServer().RegisterGO("HD_Wechat_RegisterMQTTPlugin", m.registerMQTTPlugin)
 	m.GetServer().RegisterGO("HD_Wechat_CallWechat", m.callWechat)
+	m.GetServer().RegisterGO("Wechat_DisconnectMQTTPlugin", m.disconnectMQTTPlugin)
 	// ------------------ 媒体容器客户端 ------------------
 	m.GetServer().RegisterGO("HD_Upload_RegisterMQTTUploader", mediaStorer.registerMQTTUploader)
 	m.GetServer().RegisterGO("HD_Upload_MQTTUploadFinish", mediaStorer.mqttUploadFinish)
+	m.GetServer().RegisterGO("Upload_DisconnectMQTTUploader", mediaStorer.disconnectMQTTUploader)
 }
 
 // Run 运行主函数

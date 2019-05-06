@@ -40,7 +40,16 @@ func (m *Wechat) registerMQTTPlugin(session gate.Session, msg map[string]interfa
 		msgListenerTopic     = common.ForceString(msg["msgListenerTopic"])
 	)
 	token := uuid.Rand().Hex()
-	session.Set("WechatToken", token)
+	session.Set("WechatPluginToken", token)
+	eStr := session.Push()
+	if eStr != "" {
+		log.Error("推送session失败: %s", eStr)
+		result = common.Response{
+			Ret: common.RetCodeServerError,
+			Msg: "push session fail",
+		}
+		return
+	}
 	plugin := &mqttPlugin{
 		name:                 name,
 		description:          description,
@@ -53,6 +62,23 @@ func (m *Wechat) registerMQTTPlugin(session gate.Session, msg map[string]interfa
 	m.pluginMap[token] = plugin
 	result.Ret = common.RetCodeOK
 	result.Msg = token
+	return
+}
+
+func (m *Wechat) disconnectMQTTPlugin(token string) (result common.Response, err string) {
+	p, ok := m.pluginMap[token]
+	if !ok {
+		result = common.Response{
+			Ret: common.RetCodeBadRequest,
+			Msg: "plugin not found",
+		}
+		return
+	}
+	delete(m.pluginMap, token)
+	log.Debug("已卸载Plugin[%s]: %s", p.getName(), p.getDescription())
+	result = common.Response{
+		Ret: common.RetCodeOK,
+	}
 	return
 }
 
