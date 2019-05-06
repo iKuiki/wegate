@@ -24,6 +24,15 @@ func (m *Wechat) registerMQTTPlugin(session gate.Session, msg map[string]interfa
 		}
 		return
 	}
+	// 检查此client是否有注册WechatUploader
+	if token := session.Get("WechatPluginToken"); token != "" {
+		log.Debug("检测到session尝试重复注册Plugin")
+		result = common.Response{
+			Ret: common.RetCodeBadRequest,
+			Msg: "duplicate registered",
+		}
+		return
+	}
 	name, description := common.ForceString(msg["name"]), common.ForceString(msg["description"])
 	// 检查mqttPlugin是否符合规范
 	if name == "" || description == "" {

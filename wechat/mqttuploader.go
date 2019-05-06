@@ -16,6 +16,15 @@ func (s *mediaStorer) registerMQTTUploader(session gate.Session, msg map[string]
 		}
 		return
 	}
+	// 检查此client是否有注册WechatUploader
+	if token := session.Get("WechatUploaderToken"); token != "" {
+		log.Debug("检测到session尝试重复注册Uploader")
+		result = common.Response{
+			Ret: common.RetCodeBadRequest,
+			Msg: "duplicate registered",
+		}
+		return
+	}
 	name, description := common.ForceString(msg["name"]), common.ForceString(msg["description"])
 	// 检查mqttUploader是否符合规范
 	if name == "" || description == "" {
@@ -29,7 +38,7 @@ func (s *mediaStorer) registerMQTTUploader(session gate.Session, msg map[string]
 	if uploadListenerTopic == "" {
 		result = common.Response{
 			Ret: common.RetCodeBadRequest,
-			Msg: "module name or description is empty",
+			Msg: "upload listener topic is empty",
 		}
 		return
 	}
