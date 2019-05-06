@@ -62,6 +62,7 @@ func (s *mediaStorer) registerMQTTUploader(session gate.Session, msg map[string]
 		caller:              session,
 	}
 	s.uploaders[token] = uploader
+	s.moduleControlSigChan <- controlSigUploadContactImg
 	result.Ret = common.RetCodeOK
 	result.Msg = token
 	return

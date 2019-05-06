@@ -214,9 +214,8 @@ func (m *Wechat) getContactList(token string) (result []datastruct.Contact, err 
 		err = "token invalid"
 		return
 	}
-	cts := m.wechat.GetContactList()
-	if cts != nil {
-		result = cts
+	for _, contact := range m.contacts {
+		result = append(result, contact)
 	}
 	return
 }
@@ -230,11 +229,10 @@ func (m *Wechat) getContactByUserName(token string, userName string) (result dat
 		err = "token invalid"
 		return
 	}
-	contact, e := m.wechat.GetContact(userName)
-	if e != nil {
-		err = e.Error()
-	} else {
+	if contact, ok := m.contacts[userName]; ok {
 		result = contact
+	} else {
+		err = "User not found"
 	}
 	return
 }
@@ -248,11 +246,15 @@ func (m *Wechat) getContactByAlias(token string, alias string) (result datastruc
 		err = "token invalid"
 		return
 	}
-	contact, e := m.wechat.GetContactByAlias(alias)
-	if e != nil {
-		err = e.Error()
-	} else {
-		result = contact
+	found := false
+	for _, v := range m.contacts {
+		if v.Alias == alias {
+			result = v
+			found = true
+		}
+	}
+	if !found {
+		err = "User not found"
 	}
 	return
 }
@@ -266,11 +268,15 @@ func (m *Wechat) getContactByNickname(token string, nickname string) (result dat
 		err = "token invalid"
 		return
 	}
-	contact, e := m.wechat.GetContactByNickname(nickname)
-	if e != nil {
-		err = e.Error()
-	} else {
-		result = contact
+	found := false
+	for _, v := range m.contacts {
+		if v.NickName == nickname {
+			result = v
+			found = true
+		}
+	}
+	if !found {
+		err = "User not found"
 	}
 	return
 }
@@ -284,11 +290,15 @@ func (m *Wechat) getContactByRemarkName(token string, remarkName string) (result
 		err = "token invalid"
 		return
 	}
-	contact, e := m.wechat.GetContactByRemarkName(remarkName)
-	if e != nil {
-		err = e.Error()
-	} else {
-		result = contact
+	found := false
+	for _, v := range m.contacts {
+		if v.RemarkName == remarkName {
+			result = v
+			found = true
+		}
+	}
+	if !found {
+		err = "User not found"
 	}
 	return
 }
