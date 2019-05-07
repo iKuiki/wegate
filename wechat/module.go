@@ -24,12 +24,18 @@ const (
 	controlSigUploadContactImg controlSig = 100
 )
 
+// 用户信息，包括当前登陆用户与联系人列表
+type userInfo struct {
+	user        *datastruct.User
+	contactList map[string]datastruct.Contact
+}
+
 // Wechat 微信模块
 type Wechat struct {
 	basemodule.BaseModule
 	// 微信相关对象
-	wechat      *wwdk.WechatWeb // 微信sdk本体
-	contacts    map[string]datastruct.Contact
+	wechat      *wwdk.WechatWeb       // 微信sdk本体
+	userInfo    userInfo              // 用户信息，包括当前登陆用户与联系人列表
 	loginStatus wwdk.LoginChannelItem // 当前微信状态
 	// 插件Map：
 	// 插件模块调用本模块提供的注册方法来注册插件到map中
@@ -67,12 +73,13 @@ func (m *Wechat) OnInit(app module.App, settings *conf.ModuleSettings) {
 		panic("Get new wechatweb client error: " + err.Error())
 	}
 	m.pluginMap = make(map[string]Plugin)
-	m.contacts = make(map[string]datastruct.Contact)
+	m.userInfo.contactList = make(map[string]datastruct.Contact)
 	m.App.AddRPCSerialize("WechatSerialize", new(wechatSerialize))
 	m.GetServer().RegisterGO("RegisterRpcPlugin", m.registerRPCPlugin)
 	// 针对wwdk操作的方法都以Wechat开头
 	m.GetServer().RegisterGO("Wechat_SendTextMessage", m.sendTextMessage)
 	m.GetServer().RegisterGO("Wechat_RevokeMessage", m.revokeMessage)
+	m.GetServer().RegisterGO("Wechat_GetUser", m.getUser)
 	m.GetServer().RegisterGO("Wechat_GetContactList", m.getContactList)
 	m.GetServer().RegisterGO("Wechat_GetContactByUserName", m.getContactByUserName)
 	m.GetServer().RegisterGO("Wechat_GetContactByAlias", m.getContactByAlias)
@@ -101,9 +108,13 @@ func (m *Wechat) Run(closeSig chan bool) {
 			case sig := <-m.controlSigChan:
 				switch sig {
 				case controlSigUploadContactImg:
+					// 检查用户是否上传了头像
+					if strings.HasPrefix(m.userInfo.user.HeadImgURL, "/cgi-bin/mmwebwx-bin/") {
+						m.syncUser()
+					}
 					// 统计未完成上传头像的联系人
 					var originImgContact []datastruct.Contact
-					for _, contact := range m.contacts {
+					for _, contact := range m.userInfo.contactList {
 						if strings.HasPrefix(contact.HeadImgURL, "/cgi-bin/mmwebwx-bin/") {
 							originImgContact = append(originImgContact, contact)
 						}

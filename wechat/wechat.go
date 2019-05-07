@@ -48,7 +48,7 @@ SYNCLOOP:
 					if err == nil {
 						contact.HeadImgURL = headImg
 					}
-					m.contacts[contact.UserName] = contact
+					m.userInfo.contactList[contact.UserName] = contact
 					// 广播contact
 					m.broadcastContact(contact)
 				// 收到新信息
@@ -121,15 +121,41 @@ func (m *Wechat) broadcastMessage(message datastruct.Message) {
 }
 
 func (m *Wechat) updateLoginStatus(item wwdk.LoginChannelItem) {
-	// 做初步处理
-	if item.Code == wwdk.LoginStatusErrorOccurred {
+	// 对code进行预处理
+	switch item.Code {
+	case wwdk.LoginStatusErrorOccurred:
 		// 登陆失败
 		panic(fmt.Sprintf("WxWeb Login error: %+v", item.Err))
-	}
-	// 如果是登陆成功，则存一份联系人表
-	if item.Code == wwdk.LoginStatusGotBatchContact {
+	case wwdk.LoginStatusWaitForScan:
+		// 如果重新登陆了，就重置用户信息
+		m.userInfo.user = nil
+	case wwdk.LoginStatusInitFinish:
+		// 获取用户信息
+		u, e := m.wechat.GetUser()
+		if e != nil {
+			log.Error("get user fail: %v", e)
+		} else {
+			m.userInfo.user = &u
+			// 同步用户头像
+			m.syncUser()
+		}
+	case wwdk.LoginStatusGotContact:
+		// 如果是通过存储信息免登录，则不会有Init Finish的状态，则再此记录用户信息
+		if m.userInfo.user == nil {
+			// 获取用户信息
+			u, e := m.wechat.GetUser()
+			if e != nil {
+				log.Error("get user fail: %v", e)
+			} else {
+				m.userInfo.user = &u
+				// 同步用户头像
+				m.syncUser()
+			}
+		}
+	case wwdk.LoginStatusGotBatchContact:
+		// 如果是登陆成功，则存一份联系人表
 		// 如果重新登陆了需要先清空原来的联系人，否则一定会造成联系人重复
-		m.contacts = make(map[string]datastruct.Contact)
+		m.userInfo.contactList = make(map[string]datastruct.Contact)
 		m.syncContact(m.wechat.GetContactList())
 	}
 	// 更新到Wechat
@@ -145,6 +171,30 @@ func (m *Wechat) updateLoginStatus(item wwdk.LoginChannelItem) {
 			}()
 			plugin.loginStatus(m.loginStatus)
 		}(plugin)
+	}
+}
+
+// 处理当前登陆用户(主要操作是上传头像)
+func (m *Wechat) syncUser() {
+	if m.userInfo.user == nil {
+		return
+	}
+	sChan := make(chan string)
+	go func() {
+		fileurl, err := m.wechat.SaveUserImg(*m.userInfo.user)
+		if err == nil {
+			sChan <- fileurl
+		} else {
+			sChan <- ""
+		}
+	}()
+	select {
+	case ret := <-sChan:
+		if ret != "" {
+			m.userInfo.user.HeadImgURL = ret
+		}
+	case <-time.After(time.Second):
+		// 超时，不做修改
 	}
 }
 
@@ -182,7 +232,7 @@ func (m *Wechat) syncContact(contacts []datastruct.Contact) {
 	}
 	for i := 0; i < len(contacts); i++ {
 		c := <-contactChan
-		m.contacts[c.UserName] = c
+		m.userInfo.contactList[c.UserName] = c
 		m.broadcastContact(c)
 	}
 	log.Debug("syncContact form wwdk success, total(%d) contacts", len(contacts))
@@ -240,6 +290,22 @@ func (m *Wechat) revokeMessage(token string, srvMsgID, localMsgID, toUserName st
 	return
 }
 
+// 获取当前登陆用户
+// @return result 当前登陆用户
+// @return err 错误（为空则无错误
+func (m *Wechat) getUser(token string) (result datastruct.User, err string) {
+	if !m.checkToken(token) {
+		err = "token invalid"
+		return
+	}
+	if m.userInfo.user == nil {
+		err = "User not found"
+		return
+	}
+	result = *m.userInfo.user
+	return
+}
+
 // 获取联系人列表
 // @return result 联系人列表
 // @return err 错误（为空则无错误
@@ -248,7 +314,7 @@ func (m *Wechat) getContactList(token string) (result []datastruct.Contact, err 
 		err = "token invalid"
 		return
 	}
-	for _, contact := range m.contacts {
+	for _, contact := range m.userInfo.contactList {
 		result = append(result, contact)
 	}
 	return
@@ -263,7 +329,7 @@ func (m *Wechat) getContactByUserName(token string, userName string) (result dat
 		err = "token invalid"
 		return
 	}
-	if contact, ok := m.contacts[userName]; ok {
+	if contact, ok := m.userInfo.contactList[userName]; ok {
 		result = contact
 	} else {
 		err = "User not found"
@@ -281,7 +347,7 @@ func (m *Wechat) getContactByAlias(token string, alias string) (result datastruc
 		return
 	}
 	found := false
-	for _, v := range m.contacts {
+	for _, v := range m.userInfo.contactList {
 		if v.Alias == alias {
 			result = v
 			found = true
@@ -303,7 +369,7 @@ func (m *Wechat) getContactByNickname(token string, nickname string) (result dat
 		return
 	}
 	found := false
-	for _, v := range m.contacts {
+	for _, v := range m.userInfo.contactList {
 		if v.NickName == nickname {
 			result = v
 			found = true
@@ -325,7 +391,7 @@ func (m *Wechat) getContactByRemarkName(token string, remarkName string) (result
 		return
 	}
 	found := false
-	for _, v := range m.contacts {
+	for _, v := range m.userInfo.contactList {
 		if v.RemarkName == remarkName {
 			result = v
 			found = true
