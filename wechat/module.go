@@ -8,6 +8,7 @@ import (
 	"github.com/liangdas/mqant/log"
 	"github.com/liangdas/mqant/module"
 	"github.com/liangdas/mqant/module/base"
+	"strings"
 )
 
 // Module 模块实例化
@@ -100,7 +101,14 @@ func (m *Wechat) Run(closeSig chan bool) {
 			case sig := <-m.controlSigChan:
 				switch sig {
 				case controlSigUploadContactImg:
-					m.syncContact()
+					// 统计未完成上传头像的联系人
+					var originImgContact []datastruct.Contact
+					for _, contact := range m.contacts {
+						if strings.HasPrefix(contact.HeadImgURL, "/cgi-bin/mmwebwx-bin/") {
+							originImgContact = append(originImgContact, contact)
+						}
+					}
+					m.syncContact(originImgContact)
 				}
 			case <-controlClose:
 				return

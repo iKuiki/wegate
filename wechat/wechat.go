@@ -130,7 +130,7 @@ func (m *Wechat) updateLoginStatus(item wwdk.LoginChannelItem) {
 	if item.Code == wwdk.LoginStatusGotBatchContact {
 		// 如果重新登陆了需要先清空原来的联系人，否则一定会造成联系人重复
 		m.contacts = make(map[string]datastruct.Contact)
-		m.syncContact()
+		m.syncContact(m.wechat.GetContactList())
 	}
 	// 更新到Wechat
 	m.loginStatus = item
@@ -148,14 +148,13 @@ func (m *Wechat) updateLoginStatus(item wwdk.LoginChannelItem) {
 	}
 }
 
-// 将m.Wechat中的联系人同步到模块中
-func (m *Wechat) syncContact() {
+// 将给定的联系人处理后(主要操作是上传头像)同步到模块中
+func (m *Wechat) syncContact(contacts []datastruct.Contact) {
 	defer func() {
 		if e := recover(); e != nil {
 			log.Error("syncContact panic: %v", e)
 		}
 	}()
-	contacts := m.wechat.GetContactList()
 	contactChan := make(chan datastruct.Contact)
 	for _, contact := range contacts {
 		go func(contact datastruct.Contact) {
