@@ -50,17 +50,7 @@ SYNCLOOP:
 					}
 					m.contacts[contact.UserName] = contact
 					// 广播contact
-					for _, plugin := range m.pluginMap {
-						go func(plugin Plugin) {
-							defer func() {
-								// 调用外部方法，必须做好recover工作
-								if e := recover(); e != nil {
-									log.Error("send modify contact panic: %+v", e)
-								}
-							}()
-							plugin.modifyContact(contact)
-						}(plugin)
-					}
+					m.broadcastContact(contact)
 				// 收到新信息
 				case wwdk.SyncStatusNewMessage:
 					// 如果为媒体消息，则下载媒体
@@ -86,17 +76,7 @@ SYNCLOOP:
 						}
 					}
 					// 广播message
-					for _, plugin := range m.pluginMap {
-						go func(plugin Plugin) {
-							defer func() {
-								// 调用外部方法，必须做好recover工作
-								if e := recover(); e != nil {
-									log.Error("send new message panic: %+v", e)
-								}
-							}()
-							plugin.newMessage(message)
-						}(plugin)
-					}
+					m.broadcastMessage(message)
 				case wwdk.SyncStatusPanic:
 					// 发生致命错误，sync中断
 					panic(fmt.Sprintf("sync panic: %+v", item.Err))
@@ -110,6 +90,36 @@ SYNCLOOP:
 	}
 }
 
+// broadcastContact 广播contact
+func (m *Wechat) broadcastContact(contact datastruct.Contact) {
+	for _, plugin := range m.pluginMap {
+		go func(plugin Plugin) {
+			defer func() {
+				// 调用外部方法，必须做好recover工作
+				if e := recover(); e != nil {
+					log.Error("send modify contact panic: %+v", e)
+				}
+			}()
+			plugin.modifyContact(contact)
+		}(plugin)
+	}
+}
+
+// broadcastMessage 广播message
+func (m *Wechat) broadcastMessage(message datastruct.Message) {
+	for _, plugin := range m.pluginMap {
+		go func(plugin Plugin) {
+			defer func() {
+				// 调用外部方法，必须做好recover工作
+				if e := recover(); e != nil {
+					log.Error("send new message panic: %+v", e)
+				}
+			}()
+			plugin.newMessage(message)
+		}(plugin)
+	}
+}
+
 func (m *Wechat) updateLoginStatus(item wwdk.LoginChannelItem) {
 	// 做初步处理
 	if item.Code == wwdk.LoginStatusErrorOccurred {
@@ -118,6 +128,8 @@ func (m *Wechat) updateLoginStatus(item wwdk.LoginChannelItem) {
 	}
 	// 如果是登陆成功，则存一份联系人表
 	if item.Code == wwdk.LoginStatusGotBatchContact {
+		// 如果重新登陆了需要先清空原来的联系人，否则一定会造成联系人重复
+		m.contacts = make(map[string]datastruct.Contact)
 		m.syncContact()
 	}
 	// 更新到Wechat
@@ -172,6 +184,7 @@ func (m *Wechat) syncContact() {
 	for i := 0; i < len(contacts); i++ {
 		c := <-contactChan
 		m.contacts[c.UserName] = c
+		m.broadcastContact(c)
 	}
 	log.Debug("syncContact form wwdk success, total(%d) contacts", len(contacts))
 }
