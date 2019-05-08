@@ -46,7 +46,7 @@ func TestMQTT(t *testing.T) {
 		t.Log("LoginStatus: " + string(msg.Payload()))
 		loginStatusChannel <- true
 	})
-	pass := conf.Conf.Module["Login"][0].Settings["Password"].(string) + time.Now().Format(time.RFC3339)
+	pass := conf.Conf.Module["Login"][0].Settings["Password"].(string) + time.Now().Format(time.RFC822)
 	resp, _ := w.Request("Login/HD_Login", []byte(`{"username":"abc","password":"`+pass+`"}`))
 	if resp.Ret != common.RetCodeOK {
 		t.Fatalf("登录失败: %s", resp.Msg)
