@@ -15,6 +15,8 @@ func (s *wechatSerialize) Serialize(param interface{}) (ptype string, p []byte, 
 	switch param.(type) {
 	case wwdk.LoginChannelItem:
 		ptype = "wwdk.LoginChannelItem"
+	case datastruct.User:
+		ptype = "datastruct.User"
 	case datastruct.Contact:
 		ptype = "datastruct.Contact"
 	case datastruct.Message:
@@ -40,6 +42,10 @@ func (s *wechatSerialize) Deserialize(ptype string, b []byte) (param interface{}
 	switch ptype {
 	case "wwdk.LoginChannelItem":
 		var item wwdk.LoginChannelItem
+		err = json.Unmarshal(b, &item)
+		param = item
+	case "datastruct.User":
+		var item datastruct.User
 		err = json.Unmarshal(b, &item)
 		param = item
 	case "datastruct.Contact":
@@ -75,6 +81,7 @@ func (s *wechatSerialize) Deserialize(ptype string, b []byte) (param interface{}
 func (s *wechatSerialize) GetTypes() []string {
 	return []string{
 		"wwdk.LoginChannelItem",
+		"datastruct.User",
 		"datastruct.Contact",
 		"datastruct.Message",
 		"[]datastruct.Contact",

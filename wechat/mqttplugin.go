@@ -121,6 +121,11 @@ func (m *Wechat) callWechat(session gate.Session, msg map[string]interface{}) (r
 			common.ForceString(msg["localMsgID"]),
 			common.ForceString(msg["toUserName"]),
 		)
+	case "GetUser":
+		// getContactList(token string) (result []datastruct.Contact, err string)
+		resp, eStr = m.getUser(
+			common.ForceString(msg["token"]),
+		)
 	case "GetContactList":
 		// getContactList(token string) (result []datastruct.Contact, err string)
 		resp, eStr = m.getContactList(
