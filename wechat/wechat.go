@@ -11,7 +11,7 @@ import (
 
 func (m *Wechat) wechatServe(closeSig <-chan bool) {
 	// 创建登陆用channel用于回传登陆信息
-	loginChan := make(chan wwdk.LoginChannelItem)
+	loginChan := make(chan wwdk.LoginChannelItem, 10)
 	m.wechat.Login(loginChan)
 	// 新建一个func根据channel返回信息进行处理
 LOGINLOOP:
@@ -28,7 +28,7 @@ LOGINLOOP:
 		}
 	}
 	// 创建同步channel
-	syncChannel := make(chan wwdk.SyncChannelItem)
+	syncChannel := make(chan wwdk.SyncChannelItem, 100)
 	// 将channel传入startServe方法，开始同步服务并且将新信息通过syncChannel传回
 	m.wechat.StartServe(syncChannel)
 	// 新建一个func处理syncChannel传回信息
@@ -47,6 +47,9 @@ SYNCLOOP:
 					headImg, err := m.wechat.SaveContactImg(contact)
 					if err == nil {
 						contact.HeadImgURL = headImg
+					}
+					if len(contact.MemberList) > 0 {
+						m.saveMembersImg(&contact)
 					}
 					m.userInfo.contactList[contact.UserName] = contact
 					// 广播contact
@@ -155,8 +158,13 @@ func (m *Wechat) updateLoginStatus(item wwdk.LoginChannelItem) {
 	case wwdk.LoginStatusGotBatchContact:
 		// 如果是登陆成功，则存一份联系人表
 		// 如果重新登陆了需要先清空原来的联系人，否则一定会造成联系人重复
+		contacts := m.wechat.GetContactList()
 		m.userInfo.contactList = make(map[string]datastruct.Contact)
-		m.syncContact(m.wechat.GetContactList())
+		// 先保存一份没有头像的，可以给先到达的消息用
+		for _, contact := range contacts {
+			m.userInfo.contactList[contact.UserName] = contact
+		}
+		m.controlSigChan <- controlSigUploadContactImg // 发控制信号要求上传头像
 	}
 	// 更新到Wechat
 	m.loginStatus = item
@@ -193,9 +201,83 @@ func (m *Wechat) syncUser() {
 		if ret != "" {
 			m.userInfo.user.HeadImgURL = ret
 		}
-	case <-time.After(time.Second):
+	case <-time.After(time.Minute):
 		// 超时，不做修改
 	}
+}
+
+func (m *Wechat) saveContactImg(contact *datastruct.Contact) {
+	sChan := make(chan string)
+	go func() {
+		fileurl, err := m.wechat.SaveContactImg(*contact)
+		if err == nil {
+			sChan <- fileurl
+		} else {
+			if err.Error() != "mediaStorer.Storer error: uploader not found" {
+				log.Error("wechat.SaveContactImg error: %v", err)
+			}
+			// 如果出错，则输出一个空信息
+			sChan <- ""
+		}
+	}()
+	select {
+	case ret := <-sChan:
+		if ret != "" {
+			contact.HeadImgURL = ret
+		}
+	case <-time.After(time.Minute): // 此处超时可以忽略，因为SaveContact时已经做了超时判断
+		// 超时，不做修改
+		log.Debug("save Contact %s HeadImg timeout, skip...", contact.NickName)
+	}
+}
+
+func (m *Wechat) saveMembersImg(contact *datastruct.Contact) {
+	// 清空后再赋值
+	members := contact.MemberList
+	contact.MemberList = []datastruct.Member{}
+
+	preMemberChan := make(chan datastruct.Member)
+	memberChan := make(chan datastruct.Member)
+	for i := 0; i < 5; i++ { // 5并行避免抢占带宽造成大面积timeout
+		go func(workNo int) {
+			for member := range preMemberChan {
+				sChan := make(chan string)
+				go func() {
+					fileurl, err := m.wechat.SaveMemberImg(member, contact.UserName)
+					if err == nil {
+						sChan <- fileurl
+					} else {
+						if err.Error() != "mediaStorer.Storer error: uploader not found" {
+							log.Error("wechat.SaveMemberImg error: %v", err)
+						}
+						// 如果出错，则输出一个空信息
+						sChan <- ""
+					}
+				}()
+				select {
+				case ret := <-sChan:
+					if ret != "" {
+						member.KeyWord = ret
+					}
+				case <-time.After(time.Minute): // 此处超时可以忽略，因为SaveContact时已经做了超时判断
+					// 超时，不做修改
+					log.Debug("save Member %s HeadImg timeout, skip...", member.NickName)
+				}
+				memberChan <- member
+			}
+		}(i)
+	}
+	go func() {
+		for _, member := range members {
+			preMemberChan <- member
+		}
+		close(preMemberChan)
+	}()
+	for i := 0; i < len(members); i++ {
+		mb := <-memberChan
+		contact.MemberList = append(contact.MemberList, mb)
+	}
+	close(memberChan)
 }
 
 // 将给定的联系人处理后(主要操作是上传头像)同步到模块中
@@ -205,37 +287,32 @@ func (m *Wechat) syncContact(contacts []datastruct.Contact) {
 			log.Error("syncContact panic: %v", e)
 		}
 	}()
+	preContactChan := make(chan datastruct.Contact)
 	contactChan := make(chan datastruct.Contact)
-	for _, contact := range contacts {
-		go func(contact datastruct.Contact) {
-			sChan := make(chan string)
-			go func() {
-				fileurl, err := m.wechat.SaveContactImg(contact)
-				if err == nil {
-					sChan <- fileurl
-				} else {
-					log.Debug("wechat.SaveContactImg error: %v", err)
-					// 如果出错，则输出一个空信息
-					sChan <- ""
-				}
-			}()
-			select {
-			case ret := <-sChan:
-				if ret != "" {
-					contact.HeadImgURL = ret
-				}
-			case <-time.After(time.Minute): // 此处超时可以忽略，因为SaveContact时已经做了超时判断
-				// 超时，不做修改
-				log.Debug("save Contact %s HeadImg timeout, skip...", contact.NickName)
+	for i := 0; i < 5; i++ { // 5并行下载
+		go func(workNo int) {
+			// preContactChan
+			for contact := range preContactChan {
+				m.saveContactImg(&contact)
+				contactChan <- contact
 			}
-			contactChan <- contact
-		}(contact)
+		}(i)
 	}
+	go func() {
+		for _, contact := range contacts {
+			preContactChan <- contact
+		}
+		close(preContactChan)
+	}()
 	for i := 0; i < len(contacts); i++ {
 		c := <-contactChan
+		if len(c.MemberList) > 0 {
+			m.saveMembersImg(&c)
+		}
 		m.userInfo.contactList[c.UserName] = c
 		m.broadcastContact(c)
 	}
+	close(contactChan)
 	log.Debug("syncContact form wwdk success, total(%d) contacts", len(contacts))
 }
 

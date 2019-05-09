@@ -109,14 +109,23 @@ func (m *Wechat) Run(closeSig chan bool) {
 				switch sig {
 				case controlSigUploadContactImg:
 					// 检查用户是否上传了头像
-					if strings.HasPrefix(m.userInfo.user.HeadImgURL, "/cgi-bin/mmwebwx-bin/") {
+					if m.userInfo.user != nil && !strings.HasPrefix(m.userInfo.user.HeadImgURL, "http") {
 						m.syncUser()
 					}
 					// 统计未完成上传头像的联系人
 					var originImgContact []datastruct.Contact
-					for _, contact := range m.userInfo.contactList {
-						if strings.HasPrefix(contact.HeadImgURL, "/cgi-bin/mmwebwx-bin/") {
+					contactMap := m.userInfo.contactList // 复制一份，谨防同时读写导致爆炸
+					for _, contact := range contactMap {
+						if !strings.HasPrefix(contact.HeadImgURL, "http") {
 							originImgContact = append(originImgContact, contact)
+						} else {
+							for _, member := range contact.MemberList {
+								// 检测是否所有成员都完成了头像上传
+								if !strings.HasPrefix(member.KeyWord, "http") {
+									originImgContact = append(originImgContact, contact)
+									break
+								}
+							}
 						}
 					}
 					m.syncContact(originImgContact)
