@@ -224,8 +224,9 @@ func (m *Wechat) syncContact(contacts []datastruct.Contact) {
 				if ret != "" {
 					contact.HeadImgURL = ret
 				}
-			case <-time.After(time.Second):
+			case <-time.After(time.Minute): // 此处超时可以忽略，因为SaveContact时已经做了超时判断
 				// 超时，不做修改
+				log.Debug("save Contact %s HeadImg timeout, skip...", contact.NickName)
 			}
 			contactChan <- contact
 		}(contact)

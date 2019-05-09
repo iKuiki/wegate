@@ -3,6 +3,7 @@ package wechat
 import (
 	"github.com/ikuiki/wwdk"
 	"github.com/liangdas/mqant/gate"
+	"github.com/liangdas/mqant/utils/uuid"
 	"github.com/pkg/errors"
 	"time"
 	"wegate/common"
@@ -15,7 +16,7 @@ type Uploader interface {
 	// 获取模块描述
 	getDescription() string
 	// 上传文件（传入上传文件的content，返回上传好的url）
-	upload(file wwdk.MediaFile)
+	upload(file MediaFile)
 }
 
 // newMediaStorer 新建mediaStorer
@@ -33,24 +34,34 @@ type mediaStorer struct {
 	moduleControlSigChan chan<- controlSig
 }
 
+// MediaFile 在wwdk.MediaFile的基础上增加了QueueID
+type MediaFile struct {
+	wwdk.MediaFile
+	QueueID string
+}
+
 func (s *mediaStorer) Storer(file wwdk.MediaFile) (url string, err error) {
 	if len(s.uploaders) == 0 {
 		return "", errors.New("uploader not found")
 	}
 	urlChan := make(chan string)
-	s.finishChan[file.FileName] = urlChan
+	queueID := uuid.Rand().Hex()
+	s.finishChan[queueID] = urlChan
 	for _, uploader := range s.uploaders {
 		go func(uploader Uploader) {
-			uploader.upload(file)
+			uploader.upload(MediaFile{
+				MediaFile: file,
+				QueueID:   queueID,
+			})
 		}(uploader)
 	}
 	// 根据文件大小设置超时时间
 	// 以m为单位，再加上2m，然后除以上传带宽得到预计时间作为超时时间
 	size := len(file.BinaryContent)/1000/1000 + 2
-	timeoutChan := time.After(time.Duration(size) * time.Second * 2)
+	timeoutChan := time.After(time.Duration(size) * time.Second * 5)
 	select {
 	case url := <-urlChan:
-		delete(s.finishChan, file.FileName)
+		delete(s.finishChan, queueID)
 		return url, nil
 	case <-timeoutChan:
 		return "", errors.New("upload timeout")
@@ -59,7 +70,7 @@ func (s *mediaStorer) Storer(file wwdk.MediaFile) (url string, err error) {
 
 // 上传结束后调用此方法
 // @param token 注册时申请到的token
-// @param filename 要缓存的文件名
+// @param queueID 开始上传时分配的队列ID
 // @param fileurl 缓存后的url
 func (s *mediaStorer) mqttUploadFinish(session gate.Session, msg map[string]interface{}) (result common.Response, err string) {
 	if session.IsGuest() {
@@ -77,17 +88,17 @@ func (s *mediaStorer) mqttUploadFinish(session gate.Session, msg map[string]inte
 			Msg: "uploader unregistered",
 		}
 	}
-	filename, fileurl := common.ForceString(msg["filename"]), common.ForceString(msg["fileurl"])
+	queueID, fileurl := common.ForceString(msg["queueID"]), common.ForceString(msg["fileurl"])
 	// 检查mqttUploader是否符合规范
-	if filename == "" || fileurl == "" {
+	if queueID == "" || fileurl == "" {
 		result = common.Response{
 			Ret: common.RetCodeBadRequest,
-			Msg: "filename or fileurl is empty",
+			Msg: "queueID or fileurl is empty",
 		}
 		return
 	}
 	// 检查完毕，开始给chan发信息
-	if c, ok := s.finishChan[filename]; ok {
+	if c, ok := s.finishChan[queueID]; ok {
 		c <- fileurl
 	}
 	result = common.Response{
