@@ -59,7 +59,10 @@ func (m *Ping) Run(closeSig chan bool) {
 		m.GetType(),           // ModuleType
 		"RegisterContacts",    // loginListenerFunc
 		"ContactModifyHandle", // contactListenerFunc
-		"MsgHandle")           // msgListenerFunc
+		"MsgHandle",           // msgListenerFunc
+		"",                    // addPluginListenerFunc
+		"",                    // removePluginListenerFunc
+	)
 	if err != "" {
 		log.Error("RegisterRpcPlugin error: %s", err)
 	} else {

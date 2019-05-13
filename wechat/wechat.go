@@ -95,7 +95,9 @@ SYNCLOOP:
 
 // broadcastContact 广播contact
 func (m *Wechat) broadcastContact(contact datastruct.Contact) {
-	for _, plugin := range m.pluginMap {
+	// 复制一份pluginMap防止发生同时读写map的异常
+	pMap := m.pluginMap
+	for _, plugin := range pMap {
 		go func(plugin Plugin) {
 			defer func() {
 				// 调用外部方法，必须做好recover工作
@@ -110,7 +112,9 @@ func (m *Wechat) broadcastContact(contact datastruct.Contact) {
 
 // broadcastMessage 广播message
 func (m *Wechat) broadcastMessage(message datastruct.Message) {
-	for _, plugin := range m.pluginMap {
+	// 复制一份pluginMap防止发生同时读写map的异常
+	pMap := m.pluginMap
+	for _, plugin := range pMap {
 		go func(plugin Plugin) {
 			defer func() {
 				// 调用外部方法，必须做好recover工作
@@ -169,7 +173,9 @@ func (m *Wechat) updateLoginStatus(item wwdk.LoginChannelItem) {
 	// 更新到Wechat
 	m.loginStatus = item
 	// 广播loginStatus
-	for _, plugin := range m.pluginMap {
+	// 复制一份pluginMap防止发生同时读写map的异常
+	pMap := m.pluginMap
+	for _, plugin := range pMap {
 		go func(plugin Plugin) {
 			defer func() {
 				// 调用外部方法，必须做好recover工作

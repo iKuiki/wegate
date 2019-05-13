@@ -76,6 +76,9 @@ func (m *Wechat) OnInit(app module.App, settings *conf.ModuleSettings) {
 	m.userInfo.contactList = make(map[string]datastruct.Contact)
 	m.App.AddRPCSerialize("WechatSerialize", new(wechatSerialize))
 	m.GetServer().RegisterGO("RegisterRpcPlugin", m.registerRPCPlugin)
+	// 插件相关
+	m.GetServer().RegisterGO("Plugin_GetPluginList", m.getPluginList)
+	m.GetServer().RegisterGO("HD_Plugin_GetPluginList", m.mqttGetPluginList)
 	// 针对wwdk操作的方法都以Wechat开头
 	m.GetServer().RegisterGO("Wechat_SendTextMessage", m.sendTextMessage)
 	m.GetServer().RegisterGO("Wechat_RevokeMessage", m.revokeMessage)

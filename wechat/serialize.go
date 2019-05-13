@@ -29,6 +29,8 @@ func (s *wechatSerialize) Serialize(param interface{}) (ptype string, p []byte, 
 		ptype = "wechatstruct.RevokeMessageRespond"
 	case wwdk.WechatRunInfo:
 		ptype = "wwdk.WechatRunInfo"
+	case PluginDesc:
+		ptype = "PluginDesc"
 	default:
 		err = errors.New("unknown param type: " + reflect.TypeOf(param).Name())
 		// 此处务必要记得返回呀，不然就出大事了！
@@ -72,6 +74,10 @@ func (s *wechatSerialize) Deserialize(ptype string, b []byte) (param interface{}
 		var item wwdk.WechatRunInfo
 		err = json.Unmarshal(b, &item)
 		param = item
+	case "PluginDesc":
+		var item PluginDesc
+		err = json.Unmarshal(b, &item)
+		param = item
 	default:
 		err = errors.New("unknown param type: " + ptype)
 	}
@@ -88,5 +94,6 @@ func (s *wechatSerialize) GetTypes() []string {
 		"wechatstruct.SendMessageRespond",
 		"wechatstruct.RevokeMessageRespond",
 		"wwdk.WechatRunInfo",
+		"PluginDesc",
 	}
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/liangdas/mqant/gate"
 	"github.com/liangdas/mqant/log"
 	"github.com/liangdas/mqant/utils/uuid"
+	"time"
 	"wegate/common"
 )
 
@@ -44,9 +45,11 @@ func (m *Wechat) registerMQTTPlugin(session gate.Session, msg map[string]interfa
 	}
 	log.Info("新MQTT Plugin注册：%s[%s]", name, description)
 	var (
-		loginListenerTopic   = common.ForceString(msg["loginListenerTopic"])
-		contactListenerTopic = common.ForceString(msg["contactListenerTopic"])
-		msgListenerTopic     = common.ForceString(msg["msgListenerTopic"])
+		loginListenerTopic        = common.ForceString(msg["loginListenerTopic"])
+		contactListenerTopic      = common.ForceString(msg["contactListenerTopic"])
+		msgListenerTopic          = common.ForceString(msg["msgListenerTopic"])
+		addPluginListenerTopic    = common.ForceString(msg["addPluginListenerTopic"])
+		removePluginListenerTopic = common.ForceString(msg["removePluginListenerTopic"])
 	)
 	token := uuid.Rand().Hex()
 	session.Set("WechatPluginToken", token)
@@ -60,12 +63,34 @@ func (m *Wechat) registerMQTTPlugin(session gate.Session, msg map[string]interfa
 		return
 	}
 	plugin := &mqttPlugin{
-		name:                 name,
-		description:          description,
-		loginListenerTopic:   loginListenerTopic,
-		contactListenerTopic: contactListenerTopic,
-		msgListenerTopic:     msgListenerTopic,
-		caller:               session,
+		name:                      name,
+		description:               description,
+		loginListenerTopic:        loginListenerTopic,
+		contactListenerTopic:      contactListenerTopic,
+		msgListenerTopic:          msgListenerTopic,
+		addPluginListenerTopic:    addPluginListenerTopic,
+		removePluginListenerTopic: removePluginListenerTopic,
+		caller:                    session,
+		createdAt:                 time.Now(),
+	}
+	// 广播新插件注册消息
+	pMap := m.pluginMap
+	for _, p := range pMap {
+		go func(p Plugin) {
+			defer func() {
+				// 调用外部方法，必须做好recover工作
+				if e := recover(); e != nil {
+					log.Error("send add plugin message panic: %+v", e)
+				}
+			}()
+			pDesc := PluginDesc{
+				Name:        plugin.getName(),
+				Description: plugin.getDescription(),
+				PluginType:  plugin.getPluginType(),
+				CreatedAt:   plugin.getCreatedAt(),
+			}
+			p.addPlugin(pDesc)
+		}(p)
 	}
 	plugin.loginStatus(m.loginStatus)
 	m.pluginMap[token] = plugin
@@ -75,7 +100,7 @@ func (m *Wechat) registerMQTTPlugin(session gate.Session, msg map[string]interfa
 }
 
 func (m *Wechat) disconnectMQTTPlugin(token string) (result common.Response, err string) {
-	p, ok := m.pluginMap[token]
+	plugin, ok := m.pluginMap[token]
 	if !ok {
 		result = common.Response{
 			Ret: common.RetCodeBadRequest,
@@ -84,7 +109,26 @@ func (m *Wechat) disconnectMQTTPlugin(token string) (result common.Response, err
 		return
 	}
 	delete(m.pluginMap, token)
-	log.Debug("已卸载Plugin[%s]: %s", p.getName(), p.getDescription())
+	log.Debug("已卸载Plugin[%s]: %s", plugin.getName(), plugin.getDescription())
+	// 广播插件卸载消息
+	pMap := m.pluginMap
+	for _, p := range pMap {
+		go func(p Plugin) {
+			defer func() {
+				// 调用外部方法，必须做好recover工作
+				if e := recover(); e != nil {
+					log.Error("send add plugin message panic: %+v", e)
+				}
+			}()
+			pDesc := PluginDesc{
+				Name:        plugin.getName(),
+				Description: plugin.getDescription(),
+				PluginType:  plugin.getPluginType(),
+				CreatedAt:   plugin.getCreatedAt(),
+			}
+			p.removePlugin(pDesc)
+		}(p)
+	}
 	result = common.Response{
 		Ret: common.RetCodeOK,
 	}
@@ -205,12 +249,15 @@ func (m *Wechat) callWechat(session gate.Session, msg map[string]interface{}) (r
 
 // mqttPlugin 对外公开的rpcPlugin插件的地址
 type mqttPlugin struct {
-	name                 string
-	description          string
-	loginListenerTopic   string
-	contactListenerTopic string
-	msgListenerTopic     string
-	caller               mqttCaller
+	name                      string
+	description               string
+	loginListenerTopic        string
+	contactListenerTopic      string
+	msgListenerTopic          string
+	addPluginListenerTopic    string
+	removePluginListenerTopic string
+	caller                    mqttCaller
+	createdAt                 time.Time
 }
 
 func (p *mqttPlugin) getName() string {
@@ -219,6 +266,14 @@ func (p *mqttPlugin) getName() string {
 
 func (p *mqttPlugin) getDescription() string {
 	return p.description
+}
+
+func (p *mqttPlugin) getPluginType() PluginType {
+	return PluginTypeMQTTPlugin
+}
+
+func (p *mqttPlugin) getCreatedAt() time.Time {
+	return p.createdAt
 }
 
 func (p *mqttPlugin) loginStatus(loginStatus wwdk.LoginChannelItem) {
@@ -255,6 +310,32 @@ func (p *mqttPlugin) newMessage(msg datastruct.Message) {
 			log.Error("marshal msg to json error: %v", err)
 		} else {
 			p.caller.Send(p.msgListenerTopic, payload)
+		}
+	}
+	return
+}
+
+func (p *mqttPlugin) addPlugin(pluginDesc PluginDesc) {
+	if p.addPluginListenerTopic != "" {
+		// 如果监听，则发送消息
+		payload, err := json.Marshal(pluginDesc)
+		if err != nil {
+			log.Error("marshal pluginDesc to json error: %v", err)
+		} else {
+			p.caller.Send(p.addPluginListenerTopic, payload)
+		}
+	}
+	return
+}
+
+func (p *mqttPlugin) removePlugin(pluginDesc PluginDesc) {
+	if p.removePluginListenerTopic != "" {
+		// 如果监听，则发送消息
+		payload, err := json.Marshal(pluginDesc)
+		if err != nil {
+			log.Error("marshal pluginDesc to json error: %v", err)
+		} else {
+			p.caller.Send(p.removePluginListenerTopic, payload)
 		}
 	}
 	return

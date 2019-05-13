@@ -47,7 +47,10 @@ func (m *QrTerminal) Run(closeSig chan bool) {
 		m.GetType(),       // ModuleType
 		"ShowLoginQrCode", // loginListenerFunc
 		"",                // contactListenerFunc
-		"")                // msgListenerFunc
+		"",                // msgListenerFunc
+		"",                // addPluginListenerFunc
+		"",                // removePluginListenerFunc
+	)
 	if err != "" {
 		log.Error("RegisterRpcPlugin error: %s", err)
 	}
