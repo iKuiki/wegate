@@ -23,18 +23,18 @@ type Plugin interface {
 	getDescription() string
 	getPluginType() PluginType
 	getCreatedAt() time.Time
-	// loginStatus 登陆状态变化时
-	loginStatus(loginStatus wwdk.LoginChannelItem)
-	// modifyContact 联系人发生修改时的推送
-	modifyContact(contact datastruct.Contact)
-	// newMessage 接受到新消息时的推送
-	newMessage(msg datastruct.Message)
+	// loginStatusEvent 登陆状态变化时的事件推送
+	loginStatusEvent(loginStatus wwdk.LoginChannelItem)
+	// modifyContactEvent 联系人发生修改时的事件推送
+	modifyContactEvent(contact datastruct.Contact)
+	// newMessageEvent 接受到新消息时的事件推送
+	newMessageEvent(msg datastruct.Message)
 	// 本来插件变更应该是使用同一条通道的，但是那样的话需要在传输的信息中再标注是添加还是移除
 	// 为了减少struct数量，所以把插件的变更分为添加和移除2条通道
-	// addPlugin 新插件注册
-	addPlugin(pluginDesc PluginDesc)
-	// removePlugin 插件发生卸载
-	removePlugin(pluginDesc PluginDesc)
+	// addPluginEvent 新插件注册时的事件推送
+	addPluginEvent(pluginDesc PluginDesc)
+	// removePluginEvent 插件发生卸载时的事件推送
+	removePluginEvent(pluginDesc PluginDesc)
 }
 
 // PluginType 插件类型

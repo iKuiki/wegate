@@ -89,10 +89,10 @@ func (m *Wechat) registerMQTTPlugin(session gate.Session, msg map[string]interfa
 				PluginType:  plugin.getPluginType(),
 				CreatedAt:   plugin.getCreatedAt(),
 			}
-			p.addPlugin(pDesc)
+			p.addPluginEvent(pDesc)
 		}(p)
 	}
-	plugin.loginStatus(m.loginStatus)
+	plugin.loginStatusEvent(m.loginStatus)
 	m.pluginMap[token] = plugin
 	result.Ret = common.RetCodeOK
 	result.Msg = token
@@ -126,7 +126,7 @@ func (m *Wechat) disconnectMQTTPlugin(token string) (result common.Response, err
 				PluginType:  plugin.getPluginType(),
 				CreatedAt:   plugin.getCreatedAt(),
 			}
-			p.removePlugin(pDesc)
+			p.removePluginEvent(pDesc)
 		}(p)
 	}
 	result = common.Response{
@@ -276,7 +276,7 @@ func (p *mqttPlugin) getCreatedAt() time.Time {
 	return p.createdAt
 }
 
-func (p *mqttPlugin) loginStatus(loginStatus wwdk.LoginChannelItem) {
+func (p *mqttPlugin) loginStatusEvent(loginStatus wwdk.LoginChannelItem) {
 	if p.loginListenerTopic != "" {
 		// 如果监听，则发送消息
 		payload, err := json.Marshal(loginStatus)
@@ -289,7 +289,7 @@ func (p *mqttPlugin) loginStatus(loginStatus wwdk.LoginChannelItem) {
 	return
 }
 
-func (p *mqttPlugin) modifyContact(contact datastruct.Contact) {
+func (p *mqttPlugin) modifyContactEvent(contact datastruct.Contact) {
 	if p.contactListenerTopic != "" {
 		// 如果监听，则发送消息
 		payload, err := json.Marshal(contact)
@@ -302,7 +302,7 @@ func (p *mqttPlugin) modifyContact(contact datastruct.Contact) {
 	return
 }
 
-func (p *mqttPlugin) newMessage(msg datastruct.Message) {
+func (p *mqttPlugin) newMessageEvent(msg datastruct.Message) {
 	if p.msgListenerTopic != "" {
 		// 如果监听，则发送消息
 		payload, err := json.Marshal(msg)
@@ -315,7 +315,7 @@ func (p *mqttPlugin) newMessage(msg datastruct.Message) {
 	return
 }
 
-func (p *mqttPlugin) addPlugin(pluginDesc PluginDesc) {
+func (p *mqttPlugin) addPluginEvent(pluginDesc PluginDesc) {
 	if p.addPluginListenerTopic != "" {
 		// 如果监听，则发送消息
 		payload, err := json.Marshal(pluginDesc)
@@ -328,7 +328,7 @@ func (p *mqttPlugin) addPlugin(pluginDesc PluginDesc) {
 	return
 }
 
-func (p *mqttPlugin) removePlugin(pluginDesc PluginDesc) {
+func (p *mqttPlugin) removePluginEvent(pluginDesc PluginDesc) {
 	if p.removePluginListenerTopic != "" {
 		// 如果监听，则发送消息
 		payload, err := json.Marshal(pluginDesc)
