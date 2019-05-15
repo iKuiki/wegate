@@ -103,7 +103,15 @@ func (m *Wechat) OnInit(app module.App, settings *conf.ModuleSettings) {
 
 // Run 运行主函数
 func (m *Wechat) Run(closeSig chan bool) {
-	close, controlClose := make(chan bool), make(chan bool)
+	close, controlClose, controlClosed := make(chan bool), make(chan bool), make(chan bool)
+	closed := false
+	go func() {
+		// 等待到关闭信号，关闭wechat循环与wechat服务器
+		<-closeSig
+		closed = true
+		close <- true
+		controlClose <- true
+	}()
 	// 执行控制信号
 	go func() {
 		for {
@@ -134,30 +142,24 @@ func (m *Wechat) Run(closeSig chan bool) {
 					m.syncContact(originImgContact)
 				}
 			case <-controlClose:
+				controlClosed <- true // 证实控制信号执行模块已经停止
 				return
 			}
 		}
 	}()
-	closed := false
-	go func() {
-		// 内嵌一层函数以异步
-		for !closed {
-			func() {
-				// 在子方法中运行，发生panic后可以及时恢复
-				defer func() {
-					if e := recover(); e != nil {
-						log.Error("wechat module run panic: %+v", e)
-					}
-				}()
-				// 开始执行服务块
-				// TODO: 应当把closeSig传入wechatServe中，在其逻辑内合理停止
-				m.wechatServe(close)
+	for !closed {
+		func() {
+			// 在子方法中运行，发生panic后可以及时恢复
+			defer func() {
+				if e := recover(); e != nil {
+					log.Error("wechat module run panic: %+v", e)
+				}
 			}()
-		}
-	}()
-	// 等待到关闭信号，关闭wechat循环与wechat服务器
-	<-closeSig
-	closed = true
-	close <- true
-	controlClose <- true
+			// 开始执行服务块
+			// TODO: 应当把closeSig传入wechatServe中，在其逻辑内合理停止
+			m.wechatServe(close)
+		}()
+	}
+	// 等待证实控制信号执行模块已经停止
+	<-controlClosed
 }
