@@ -18,6 +18,7 @@ func Module() module.Module {
 // WGate 网关
 type WGate struct {
 	basegate.Gate //继承
+	closed        bool
 }
 
 // GetType 返回Type
@@ -30,6 +31,19 @@ func (wgt *WGate) GetType() string {
 func (wgt *WGate) Version() string {
 	//可以在监控时了解代码版本
 	return "1.0.0"
+}
+
+// Run 运行主函数
+func (wgt *WGate) Run(closeSig chan bool) {
+	close := make(chan bool)
+	go func() {
+		// 在异步方法中监听closeSig信号
+		<-closeSig
+		wgt.closed = true
+		close <- true
+	}()
+	// 运行basegate.Gate的Run方法
+	wgt.Gate.Run(close)
 }
 
 //与客户端通信的自定义粘包示例，需要mqant v1.6.4版本以上才能运行
@@ -56,28 +70,33 @@ func (wgt *WGate) Connect(session gate.Session) {
 // DisConnect 当连接关闭	或者客户端主动发送MQTT DisConnect命令 ,这个函数中Session无法再继续后续的设置操作，只能读取部分配置内容了
 func (wgt *WGate) DisConnect(session gate.Session) {
 	log.Info("客户端断开了链接")
-	// 检查此client是否有注册WechatPlugin
-	if token := session.Get("WechatPluginToken"); token != "" {
-		log.Debug("检测到客户端注册了WechatPlugin，开始卸载")
-		result, eStr := wgt.RpcInvoke("Wechat", "Wechat_DisconnectMQTTPlugin", token)
-		if eStr != "" {
-			log.Error("call Wechat Wechat_DisconnectMQTTPlugin error: %s", eStr)
+	if !wgt.closed {
+		// 非服务器关闭导致的连接中断，则需要检查是否有注册插件
+		// 检查此client是否有注册WechatPlugin
+		if token := session.Get("WechatPluginToken"); token != "" {
+			log.Debug("检测到客户端注册了WechatPlugin，开始卸载")
+			result, eStr := wgt.RpcInvoke("Wechat", "Wechat_DisconnectMQTTPlugin", token)
+			if eStr != "" {
+				log.Error("call Wechat Wechat_DisconnectMQTTPlugin error: %s", eStr)
+			} else {
+				r := result.(common.Response)
+				if r.Ret != common.RetCodeOK {
+					log.Debug("Wechat_DisconnectMQTTPlugin fail(%d): %s", r.Ret, r.Msg)
+				}
+			}
 		}
-		r := result.(common.Response)
-		if r.Ret != common.RetCodeOK {
-			log.Debug("Wechat_DisconnectMQTTPlugin fail(%d): %s", r.Ret, r.Msg)
-		}
-	}
-	// 检查此client是否有注册WechatUploader
-	if token := session.Get("WechatUploaderToken"); token != "" {
-		log.Debug("检测到客户端注册了WechatUploader，开始卸载")
-		result, eStr := wgt.RpcInvoke("Wechat", "Upload_DisconnectMQTTUploader", token)
-		if eStr != "" {
-			log.Error("call Wechat Upload_DisconnectMQTTUploader error: %s", eStr)
-		}
-		r := result.(common.Response)
-		if r.Ret != common.RetCodeOK {
-			log.Debug("Upload_DisconnectMQTTUploader fail(%d): %s", r.Ret, r.Msg)
+		// 检查此client是否有注册WechatUploader
+		if token := session.Get("WechatUploaderToken"); token != "" {
+			log.Debug("检测到客户端注册了WechatUploader，开始卸载")
+			result, eStr := wgt.RpcInvoke("Wechat", "Upload_DisconnectMQTTUploader", token)
+			if eStr != "" {
+				log.Error("call Wechat Upload_DisconnectMQTTUploader error: %s", eStr)
+			} else {
+				r := result.(common.Response)
+				if r.Ret != common.RetCodeOK {
+					log.Debug("Upload_DisconnectMQTTUploader fail(%d): %s", r.Ret, r.Msg)
+				}
+			}
 		}
 	}
 }

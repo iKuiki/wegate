@@ -105,7 +105,7 @@ func (m *Wechat) broadcastContact(contact datastruct.Contact) {
 					log.Error("send modify contact panic: %+v", e)
 				}
 			}()
-			plugin.modifyContact(contact)
+			plugin.modifyContactEvent(contact)
 		}(plugin)
 	}
 }
@@ -122,7 +122,7 @@ func (m *Wechat) broadcastMessage(message datastruct.Message) {
 					log.Error("send new message panic: %+v", e)
 				}
 			}()
-			plugin.newMessage(message)
+			plugin.newMessageEvent(message)
 		}(plugin)
 	}
 }
@@ -183,7 +183,7 @@ func (m *Wechat) updateLoginStatus(item wwdk.LoginChannelItem) {
 					log.Error("send login status panic: %+v", e)
 				}
 			}()
-			plugin.loginStatus(m.loginStatus)
+			plugin.loginStatusEvent(m.loginStatus)
 		}(plugin)
 	}
 }

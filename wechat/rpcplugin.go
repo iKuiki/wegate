@@ -72,11 +72,11 @@ func (m *Wechat) registerRPCPlugin(
 				PluginType:  plugin.getPluginType(),
 				CreatedAt:   plugin.getCreatedAt(),
 			}
-			p.addPlugin(pDesc)
+			p.addPluginEvent(pDesc)
 		}(p)
 	}
 	token = name
-	plugin.loginStatus(m.loginStatus)
+	plugin.loginStatusEvent(m.loginStatus)
 	m.pluginMap[token] = plugin
 	return
 }
@@ -97,7 +97,7 @@ func (p *rpcPlugin) getCreatedAt() time.Time {
 	return p.createdAt
 }
 
-func (p *rpcPlugin) loginStatus(loginStatus wwdk.LoginChannelItem) {
+func (p *rpcPlugin) loginStatusEvent(loginStatus wwdk.LoginChannelItem) {
 	if p.loginListenerFunc != "" {
 		e := p.caller.RpcInvokeNR(p.moduleType, p.loginListenerFunc, loginStatus)
 		if e != nil {
@@ -106,7 +106,7 @@ func (p *rpcPlugin) loginStatus(loginStatus wwdk.LoginChannelItem) {
 	}
 }
 
-func (p *rpcPlugin) modifyContact(contact datastruct.Contact) {
+func (p *rpcPlugin) modifyContactEvent(contact datastruct.Contact) {
 	if p.contactListenerFunc != "" {
 		e := p.caller.RpcInvokeNR(p.moduleType, p.contactListenerFunc, contact)
 		if e != nil {
@@ -115,7 +115,7 @@ func (p *rpcPlugin) modifyContact(contact datastruct.Contact) {
 	}
 }
 
-func (p *rpcPlugin) newMessage(msg datastruct.Message) {
+func (p *rpcPlugin) newMessageEvent(msg datastruct.Message) {
 	if p.msgListenerFunc != "" {
 		e := p.caller.RpcInvokeNR(p.moduleType, p.msgListenerFunc, msg)
 		if e != nil {
@@ -124,7 +124,7 @@ func (p *rpcPlugin) newMessage(msg datastruct.Message) {
 	}
 }
 
-func (p *rpcPlugin) addPlugin(pluginDesc PluginDesc) {
+func (p *rpcPlugin) addPluginEvent(pluginDesc PluginDesc) {
 	if p.addPluginListenerFunc != "" {
 		e := p.caller.RpcInvokeNR(p.moduleType, p.addPluginListenerFunc, pluginDesc)
 		if e != nil {
@@ -132,7 +132,7 @@ func (p *rpcPlugin) addPlugin(pluginDesc PluginDesc) {
 		}
 	}
 }
-func (p *rpcPlugin) removePlugin(pluginDesc PluginDesc) {
+func (p *rpcPlugin) removePluginEvent(pluginDesc PluginDesc) {
 	if p.removePluginListenerFunc != "" {
 		e := p.caller.RpcInvokeNR(p.moduleType, p.removePluginListenerFunc, pluginDesc)
 		if e != nil {
