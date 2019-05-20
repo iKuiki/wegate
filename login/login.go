@@ -2,8 +2,8 @@ package login
 
 import (
 	"fmt"
-	"github.com/ikuiki/go-component/language"
 	"github.com/liangdas/mqant/gate"
+	"golang.org/x/crypto/bcrypt"
 	"time"
 	"wegate/common"
 )
@@ -82,8 +82,10 @@ func (m *Login) validPassword(password string) (valid bool) {
 				pwds = append(pwds, pStr+now.Add(time.Duration(i)*time.Minute).Format(timeLayout))
 			}
 			// 只要密码在这11个密文中命中一个，即认为命中
-			if language.ArrayIn(pwds, password) != -1 {
-				return true
+			for _, pwd := range pwds {
+				if bcrypt.CompareHashAndPassword([]byte(password), []byte(pwd)) == nil {
+					return true
+				}
 			}
 		}
 	}
