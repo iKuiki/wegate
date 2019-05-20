@@ -13,6 +13,7 @@ Plugin为实现微信业务逻辑的主要构成，Plugin需要在wechat模块�
 注册插件到wechat
 
 request:
+
 | Param                    | Type   | Description                                                                             |
 | ------------------------ | ------ | --------------------------------------------------------------------------------------- |
 | name                     | string | 插件的名称                                                                              |
@@ -25,6 +26,7 @@ request:
 | removePluginListenerFunc | string | 现有插件移除监听方法，如果有已注册的wechat Plugin移除，会以该插件的信息为参数调用该方法 |
 
 response:
+
 | Return Value | Type   | Description                             |
 | ------------ | ------ | --------------------------------------- |
 | token        | string | wechatToken，后续调用微信方法需要用到的 |
@@ -41,11 +43,13 @@ response:
 获取已注册的插件
 
 request:
+
 | Param | Type   | Description                 |
 | ----- | ------ | --------------------------- |
 | token | string | wechatToken，注册时获取到的 |
 
 response:
+
 | Return Value | Type         | Description                |
 | ------------ | ------------ | -------------------------- |
 | list         | []PluginDesc | 插件描述（数组）           |
@@ -56,13 +60,15 @@ response:
 发送文字信息
 
 request:
-| Param      | Type   | Description                 |
-| ---------- | ------ | --------------------------- |
-| token      | string | wechatToken，注册时获取到的 |
+
+| Param | Type   | Description                 |
+| ----- | ------ | --------------------------- |
+| token | string | wechatToken，注册时获取到的 |
 | toUserName | string | 目标用户的微信userName      |
 | content    | string | 内容                        |
 
 response:
+
 | Return Value | Type                            | Description                             |
 | ------------ | ------------------------------- | --------------------------------------- |
 | result       | wechatstruct.SendMessageRespond | 发送信息后的返回，内有微信的messageID等 |
@@ -73,14 +79,16 @@ response:
 撤回消息
 
 request:
-| Param | Type   | Description                 |
-| ----- | ------ | --------------------------- |
-| token | string | wechatToken，注册时获取到的 |
+
+| Param      | Type   | Description                 |
+| ---------- | ------ | --------------------------- |
+| token      | string | wechatToken，注册时获取到的 |
 | srvMsgID   | string | 要撤回的消息的服务器ID      |
 | localMsgID | string | 要撤回的消息的本地ID        |
 | toUserName | string | 收件人userName              |
 
 response:
+
 | Return Value | Type                              | Description                            |
 | ------------ | --------------------------------- | -------------------------------------- |
 | result       | wechatstruct.RevokeMessageRespond | 撤回消息的返回，包含撤回消息的提示语句 |
@@ -91,11 +99,13 @@ response:
 获取登陆用户
 
 request:
+
 | Param      | Type   | Description                 |
 | ---------- | ------ | --------------------------- |
 | token      | string | wechatToken，注册时获取到的 |
 
 response:
+
 | Return Value | Type            | Description        |
 | ------------ | --------------- | ------------------ |
 | result       | datastruct.User | 用户信息           |
@@ -106,11 +116,13 @@ response:
 获取联系人列表
 
 request:
+
 | Param | Type   | Description                 |
 | ----- | ------ | --------------------------- |
 | token | string | wechatToken，注册时获取到的 |
 
 response:
+
 | Return Value | Type                 | Description        |
 | ------------ | -------------------- | ------------------ |
 | result       | []datastruct.Contact | 联系人列表         |
@@ -121,12 +133,14 @@ response:
 通过UserName获取联系人
 
 request:
+
 | Param    | Type   | Description                 |
 | -------- | ------ | --------------------------- |
 | token    | string | wechatToken，注册时获取到的 |
 | userName | string | 要查询的UserName            |
 
 response:
+
 | Return Value | Type               | Description        |
 | ------------ | ------------------ | ------------------ |
 | result       | datastruct.Contact | 目标联系人         |
@@ -137,12 +151,14 @@ response:
 通过Alias获取联系人
 
 request:
+
 | Param | Type   | Description                 |
 | ----- | ------ | --------------------------- |
 | token | string | wechatToken，注册时获取到的 |
 | alias | string | 要查询的Alias               |
 
 response:
+
 | Return Value | Type               | Description        |
 | ------------ | ------------------ | ------------------ |
 | result       | datastruct.Contact | 目标联系人         |
@@ -153,12 +169,14 @@ response:
 通过Nickname获取联系人
 
 request:
+
 | Param    | Type   | Description                 |
 | -------- | ------ | --------------------------- |
 | token    | string | wechatToken，注册时获取到的 |
 | nickname | string | 要查询的Nickname            |
 
 response:
+
 | Return Value | Type               | Description        |
 | ------------ | ------------------ | ------------------ |
 | result       | datastruct.Contact | 目标联系人         |
@@ -170,12 +188,14 @@ response:
 通过RemarkName获取联系人
 
 request:
+
 | Param      | Type   | Description                 |
 | ---------- | ------ | --------------------------- |
 | token      | string | wechatToken，注册时获取到的 |
 | remarkName | string | 要查询的RemarkName          |
 
 response:
+
 | Return Value | Type               | Description        |
 | ------------ | ------------------ | ------------------ |
 | result       | datastruct.Contact | 目标联系人         |
@@ -186,6 +206,7 @@ response:
 修改指定联系人的RemarkName
 
 request:
+
 | Param      | Type   | Description                 |
 | ---------- | ------ | --------------------------- |
 | token      | string | wechatToken，注册时获取到的 |
@@ -193,6 +214,7 @@ request:
 | remarkName | string | 要修改的昵称                |
 
 response:
+
 | Return Value | Type   | Description          |
 | ------------ | ------ | -------------------- |
 | result       | string | 无内容，仅为了占位用 |
@@ -203,6 +225,7 @@ response:
 修改群标题
 
 request:
+
 | Param      | Type   | Description                 |
 | ---------- | ------ | --------------------------- |
 | token      | string | wechatToken，注册时获取到的 |
@@ -210,6 +233,7 @@ request:
 | remarkName | string | 要修改的标题                |
 
 response:
+
 | Return Value | Type   | Description          |
 | ------------ | ------ | -------------------- |
 | result       | string | 无内容，仅为了占位用 |
@@ -220,17 +244,20 @@ response:
 获取wwdk的运行信息
 
 request:
+
 | Param | Type   | Description                 |
 | ----- | ------ | --------------------------- |
 | token | string | wechatToken，注册时获取到的 |
 
 response:
+
 | Return Value | Type               | Description                      |
 | ------------ | ------------------ | -------------------------------- |
 | result       | wwdk.WechatRunInfo | wwdk的运行信息，具体请参考wwdk包 |
 | err          | string             | 错误（为空则无错误               |
 
 ### mqttPlugin
+
 
 
 ## Uploader
