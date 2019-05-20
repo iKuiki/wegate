@@ -353,8 +353,9 @@ func (m *Wechat) sendTextMessage(token string, toUserName, content string) (resu
 }
 
 // 发送文字信息
+// @Param srvMsgID 要撤回的消息的服务器ID
+// @Param localMsgID 要撤回的消息的本地ID
 // @Param toUserName 收件人userName
-// @Param content 内容
 // @return result 撤回消息的返回，包含撤回消息的提示语句
 // @return err 错误（为空则无错误
 func (m *Wechat) revokeMessage(token string, srvMsgID, localMsgID, toUserName string) (result wechatstruct.RevokeMessageRespond, err string) {
@@ -505,7 +506,7 @@ func (m *Wechat) modifyUserRemarkName(token string, userName, remarkName string)
 }
 
 // 修改群标题
-// @Param userName 要修改的目标用户的userName
+// @Param userName 要修改的目标群的userName
 // @Param newTopic 要修改的标题
 // @return result none
 // @return err 错误（为空则无错误
