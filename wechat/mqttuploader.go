@@ -2,9 +2,9 @@ package wechat
 
 import (
 	"encoding/json"
+	"github.com/google/uuid"
 	"github.com/liangdas/mqant/gate"
 	"github.com/liangdas/mqant/log"
-	"github.com/liangdas/mqant/utils/uuid"
 	"wegate/common"
 )
 
@@ -43,7 +43,7 @@ func (s *mediaStorer) registerMQTTUploader(session gate.Session, msg map[string]
 		return
 	}
 	log.Info("新MQTT Uploader注册：%s[%s]", name, description)
-	token := uuid.Rand().Hex()
+	token := uuid.New().String()
 	session.Set("WechatUploaderToken", token)
 	eStr := session.Push()
 	if eStr != "" {

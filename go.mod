@@ -2,6 +2,7 @@ module wegate
 
 require (
 	github.com/eclipse/paho.mqtt.golang v1.2.0
+	github.com/google/uuid v1.1.1
 	github.com/ikuiki/go-component v0.0.0-20171218165758-b9f2562e71d1
 	github.com/ikuiki/wwdk v2.3.4+incompatible
 	github.com/liangdas/armyant v0.0.0-20181120080818-50ccc5936868
