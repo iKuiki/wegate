@@ -3,7 +3,7 @@ package wechat
 import (
 	"github.com/ikuiki/wwdk"
 	"github.com/ikuiki/wwdk/datastruct"
-	"github.com/ikuiki/wwdk/storer"
+	"github.com/ikuiki/storer"
 	"github.com/liangdas/mqant/conf"
 	"github.com/liangdas/mqant/log"
 	"github.com/liangdas/mqant/module"
