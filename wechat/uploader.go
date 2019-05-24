@@ -1,9 +1,9 @@
 package wechat
 
 import (
+	"github.com/google/uuid"
 	"github.com/ikuiki/wwdk"
 	"github.com/liangdas/mqant/gate"
-	"github.com/liangdas/mqant/utils/uuid"
 	"github.com/pkg/errors"
 	"time"
 	"wegate/common"
@@ -45,7 +45,7 @@ func (s *mediaStorer) Storer(file wwdk.MediaFile) (url string, err error) {
 		return "", errors.New("uploader not found")
 	}
 	urlChan := make(chan string)
-	queueID := uuid.Rand().Hex()
+	queueID := uuid.New().String()
 	s.finishChan[queueID] = urlChan
 	for _, uploader := range s.uploaders {
 		go func(uploader Uploader) {

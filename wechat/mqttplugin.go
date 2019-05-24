@@ -2,11 +2,11 @@ package wechat
 
 import (
 	"encoding/json"
+	"github.com/google/uuid"
 	"github.com/ikuiki/wwdk"
 	"github.com/ikuiki/wwdk/datastruct"
 	"github.com/liangdas/mqant/gate"
 	"github.com/liangdas/mqant/log"
-	"github.com/liangdas/mqant/utils/uuid"
 	"time"
 	"wegate/common"
 )
@@ -51,7 +51,7 @@ func (m *Wechat) registerMQTTPlugin(session gate.Session, msg map[string]interfa
 		addPluginListenerTopic    = common.ForceString(msg["addPluginListenerTopic"])
 		removePluginListenerTopic = common.ForceString(msg["removePluginListenerTopic"])
 	)
-	token := uuid.Rand().Hex()
+	token := uuid.New().String()
 	session.Set("WechatPluginToken", token)
 	eStr := session.Push()
 	if eStr != "" {
