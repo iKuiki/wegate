@@ -3,7 +3,10 @@
 	"dockerFile": "Dockerfile",
 	"extensions": [
 		"ms-vscode.go",
-		"yzhang.markdown-all-in-one"
+		"yzhang.markdown-all-in-one",
+		"davidanson.vscode-markdownlint",
+		"wmaurer.change-case",
+		"asuka.insertnumbers"
 	],
 	"runArgs": [
 		"--cap-add=SYS_PTRACE",
