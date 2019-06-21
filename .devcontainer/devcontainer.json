@@ -1,5 +1,5 @@
 {
-	"name": "WeCraftManager",
+	"name": "wegate",
 	"dockerFile": "Dockerfile",
 	"extensions": [
 		"ms-vscode.go",
