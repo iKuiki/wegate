@@ -37,6 +37,10 @@
                 "ProcessID": "development",
                 "Settings": {
                     "Password": "hello"
+                    "TOTPSecret": "hello",
+                    "TOTPPasswd": "hello",
+                    "TOTPPeriod": 30,
+                    "TOTPDigits": 8
                 }
             }
         ],
