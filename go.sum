@@ -20,8 +20,8 @@ github.com/ikuiki/mqant v1.8.1-0.20190427142930-7dabfa32d064 h1:CjM+8e+AMuOejVwa
 github.com/ikuiki/mqant v1.8.1-0.20190427142930-7dabfa32d064/go.mod h1:tF5hElwI/Pw7xSBUDlZl91Ob4OzbEKd/Sg1X5ZaiJZg=
 github.com/ikuiki/storer v1.0.0 h1:grhfosXRFWUHFM6YZyzmu1iM5/0CIBgeePz6osrZptg=
 github.com/ikuiki/storer v1.0.0/go.mod h1:Nt3q8HMrpuS/knoHqboMQ5FJlg7WBhhykz5kGijnhKE=
-github.com/ikuiki/wwdk v2.4.2+incompatible h1:JMO9CzzUNz7bzEdrH5aRfCsBabhXScpEV/fnwjyofV8=
-github.com/ikuiki/wwdk v2.4.2+incompatible/go.mod h1:g7a0UtaLALEDDxGd4XU+1XDCOz30CavdOaENfZLalRg=
+github.com/ikuiki/wwdk v2.5.0+incompatible h1:JeDmp16pfPypjB/bE1AEHhHcpmX7vUyTbsGCV8FEQIE=
+github.com/ikuiki/wwdk v2.5.0+incompatible/go.mod h1:g7a0UtaLALEDDxGd4XU+1XDCOz30CavdOaENfZLalRg=
 github.com/kataras/golog v0.0.0-20180321173939-03be10146386 h1:VT6AeCHO/mc+VedKBMhoqb5eAK8B1i9F6nZl7EGlHvA=
 github.com/kataras/golog v0.0.0-20180321173939-03be10146386/go.mod h1:PcaEvfvhGsqwXZ6S3CgCbmjcp+4UDUh2MIfF2ZEul8M=
 github.com/kataras/pio v0.0.0-20190103105442-ea782b38602d h1:V5Rs9ztEWdp58oayPq/ulmlqJJZeJP6pP79uP3qjcao=

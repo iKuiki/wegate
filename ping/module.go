@@ -74,7 +74,7 @@ func (m *Ping) Run(closeSig chan bool) {
 }
 
 func (m *Ping) registerContacts(loginItem wwdk.LoginChannelItem) (result, err string) {
-	if loginItem.Code == wwdk.LoginStatusGotBatchContact {
+	if loginItem.Code == wwdk.LoginStatusBatchGotContact {
 		m.starContacts = []string{}
 		log.Debug("检测到登陆成功(%d)开始获取星标联系人", loginItem.Code)
 		resp, err := m.RpcInvoke("Wechat", "Wechat_GetContactList", m.token)

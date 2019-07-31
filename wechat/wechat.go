@@ -159,7 +159,7 @@ func (m *Wechat) updateLoginStatus(item wwdk.LoginChannelItem) {
 				m.syncUser()
 			}
 		}
-	case wwdk.LoginStatusGotBatchContact:
+	case wwdk.LoginStatusBatchGotContact:
 		// 如果是登陆成功，则存一份联系人表
 		// 如果重新登陆了需要先清空原来的联系人，否则一定会造成联系人重复
 		contacts := m.wechat.GetContactList()
@@ -340,13 +340,13 @@ func (m *Wechat) sendTextMessage(token string, toUserName, content string) (resu
 		err = "token invalid"
 		return
 	}
-	resp, e := m.wechat.SendTextMessage(toUserName, content)
+	msgID, localID, e := m.wechat.SendTextMessage(toUserName, content)
 	if e != nil {
 		err = e.Error()
 	} else {
 		result = wechatstruct.SendMessageRespond{
-			LocalID: resp.LocalID,
-			MsgID:   resp.MsgID,
+			LocalID: localID,
+			MsgID:   msgID,
 		}
 	}
 	return
@@ -358,19 +358,14 @@ func (m *Wechat) sendTextMessage(token string, toUserName, content string) (resu
 // @Param toUserName 收件人userName
 // @return result 撤回消息的返回，包含撤回消息的提示语句
 // @return err 错误（为空则无错误
-func (m *Wechat) revokeMessage(token string, srvMsgID, localMsgID, toUserName string) (result wechatstruct.RevokeMessageRespond, err string) {
+func (m *Wechat) revokeMessage(token string, srvMsgID, localMsgID, toUserName string) (result, err string) {
 	if !m.checkToken(token) {
 		err = "token invalid"
 		return
 	}
-	resp, e := m.wechat.SendRevokeMessage(srvMsgID, localMsgID, toUserName)
+	e := m.wechat.SendRevokeMessage(srvMsgID, localMsgID, toUserName)
 	if e != nil {
 		err = e.Error()
-	} else {
-		result = wechatstruct.RevokeMessageRespond{
-			Introduction: resp.Introduction,
-			SysWording:   resp.SysWording,
-		}
 	}
 	return
 }
@@ -498,7 +493,7 @@ func (m *Wechat) modifyUserRemarkName(token string, userName, remarkName string)
 		err = "token invalid"
 		return
 	}
-	_, e := m.wechat.ModifyUserRemakName(userName, remarkName)
+	e := m.wechat.ModifyUserRemakName(userName, remarkName)
 	if e != nil {
 		err = e.Error()
 	}
@@ -515,7 +510,7 @@ func (m *Wechat) modifyChatRoomTopic(token string, userName, newTopic string) (r
 		err = "token invalid"
 		return
 	}
-	_, e := m.wechat.ModifyChatRoomTopic(userName, newTopic)
+	e := m.wechat.ModifyChatRoomTopic(userName, newTopic)
 	if e != nil {
 		err = e.Error()
 	}

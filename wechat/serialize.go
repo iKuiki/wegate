@@ -25,8 +25,6 @@ func (s *wechatSerialize) Serialize(param interface{}) (ptype string, p []byte, 
 		ptype = "[]datastruct.Contact"
 	case wechatstruct.SendMessageRespond:
 		ptype = "wechatstruct.SendMessageRespond"
-	case wechatstruct.RevokeMessageRespond:
-		ptype = "wechatstruct.RevokeMessageRespond"
 	case wwdk.WechatRunInfo:
 		ptype = "wwdk.WechatRunInfo"
 	case PluginDesc:
@@ -66,10 +64,6 @@ func (s *wechatSerialize) Deserialize(ptype string, b []byte) (param interface{}
 		var item wechatstruct.SendMessageRespond
 		err = json.Unmarshal(b, &item)
 		param = item
-	case "wechatstruct.RevokeMessageRespond":
-		var item wechatstruct.RevokeMessageRespond
-		err = json.Unmarshal(b, &item)
-		param = item
 	case "wwdk.WechatRunInfo":
 		var item wwdk.WechatRunInfo
 		err = json.Unmarshal(b, &item)
@@ -92,7 +86,6 @@ func (s *wechatSerialize) GetTypes() []string {
 		"datastruct.Message",
 		"[]datastruct.Contact",
 		"wechatstruct.SendMessageRespond",
-		"wechatstruct.RevokeMessageRespond",
 		"wwdk.WechatRunInfo",
 		"PluginDesc",
 	}
