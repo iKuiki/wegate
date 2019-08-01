@@ -1,9 +1,10 @@
 package wechat
 
 import (
+	"github.com/getsentry/sentry-go"
+	"github.com/ikuiki/storer"
 	"github.com/ikuiki/wwdk"
 	"github.com/ikuiki/wwdk/datastruct"
-	"github.com/ikuiki/storer"
 	"github.com/liangdas/mqant/conf"
 	"github.com/liangdas/mqant/log"
 	"github.com/liangdas/mqant/module"
@@ -67,6 +68,15 @@ func (m *Wechat) OnInit(app module.App, settings *conf.ModuleSettings) {
 	// 实例化WechatWeb对象
 	if filename, ok := settings.Settings["LoginStorerFile"].(string); ok && filename != "" {
 		wxConfigs = append(wxConfigs, storer.MustNewFileStorer(filename))
+	}
+	if sentryDsn, ok := settings.Settings["WwdkSentryDsn"].(string); ok && sentryDsn != "" {
+		sentryClient, err := sentry.NewClient(sentry.ClientOptions{
+			Dsn: sentryDsn,
+		})
+		if err != nil {
+			panic(err)
+		}
+		wxConfigs = append(wxConfigs, sentryClient)
 	}
 	m.wechat, err = wwdk.NewWechatWeb(wxConfigs...)
 	if err != nil {
